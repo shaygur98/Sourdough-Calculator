@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sourdough Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Setup tailwind dark mode
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        /* Smooth page transitions */
+        .page { display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+        .page.active { display: block; opacity: 1; transform: translateY(0); }
+        
+        /* Material 3 nav pill animation */
+        .nav-item { position: relative; transition: all 0.3s ease; }
+        .nav-item.active .pill { background-color: #fef3c7; transform: scale(1.1); border-radius: 9999px; }
+        .nav-item.active .icon { color: #b45309; }
+        
+        /* Dark mode nav overrides */
+        .dark .nav-item.active .pill { background-color: #451a03; }
+        .dark .nav-item.active .icon { color: #fbbf24; }
+
+        .hidden-row { display: none !important; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 dark:bg-stone-900 dark:text-stone-100 h-screen flex flex-col font-sans selection:bg-amber-200 transition-colors duration-300">
+
+    <div id="versionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-stone-900 rounded-3xl shadow-xl w-full max-w-sm p-6 transform scale-95 transition-transform duration-300" id="versionModalContent">
+            <div class="flex justify-between items-center mb-4 border-b dark:border-stone-800 pb-2">
+                <h3 class="text-lg font-bold text-stone-800 dark:text-stone-100">Version History</h3>
+                <button onclick="toggleVersionModal()" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div>
+                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v1.4.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Replaced emoji theme icons with modern minimalistic SVGs.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.3.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Moved version badge and GitHub link to the footer.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.2.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Added custom presets for common breads, dynamic dark mode, and layout refinements.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.1.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Introduced Material 3 expressive navigation and starter feeding environment estimation.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.0.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Initial release. Basic recipe generation based on reverse baker's percentages.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-white dark:bg-stone-900 shadow-sm dark:shadow-none dark:border-b dark:border-stone-800 p-4 flex justify-between items-center z-10 transition-colors duration-300">
+        <div class="w-8"></div> <h1 class="text-xl font-extrabold text-amber-700 dark:text-amber-500 tracking-tight">🌾 Sourdough Calculator</h1>
+        <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 transition" aria-label="Toggle Dark Mode">
+            <span id="theme-icon-light" class="hidden">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            </span>
+            <span id="theme-icon-dark" class="block">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
+            </span>
+        </button>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 pb-28">
+        
+        <div id="page-recipe" class="page active max-w-md mx-auto">
+            <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🍞 Custom Recipe</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Total Dough (g)</label>
+                        <input type="number" id="totalDough" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="1000" oninput="calcRecipe()">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">💧 Hydration (%)</label>
+                            <input type="number" id="hydration" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="75" oninput="calcRecipe()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🦠 Starter (%)</label>
+                            <input type="number" id="starterPct" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="20" oninput="calcRecipe()">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🧂 Salt (%)</label>
+                        <input type="number" id="saltPct" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="2" oninput="calcRecipe()">
+                    </div>
+
+                    <div class="mt-6 border-t border-stone-100 dark:border-stone-700 pt-4 space-y-2">
+                        <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold mb-3">Required Ingredients</p>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🌾 Flour</span>
+                            <span id="outFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">💧 Water</span>
+                            <span id="outWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🦠 Starter</span>
+                            <span id="outStarter" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🧂 Salt</span>
+                            <span id="outSalt" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-presets" class="page max-w-md mx-auto">
+            <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🥖 Common Breads</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">📖 Select Style</label>
+                        <select id="presetType" onchange="loadPreset()" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500 appearance-none font-medium">
+                            <option value="neapolitan">🍕 Neapolitan Pizza</option>
+                            <option value="nypizza">🍕 NY Style Pizza</option>
+                            <option value="focaccia">🌿 Focaccia</option>
+                            <option value="baguette">🥖 Baguette</option>
+                            <option value="ciabatta">🥪 Ciabatta</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🔢 Quantity</label>
+                            <input type="number" id="pQty" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="4" oninput="calcPreset()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Weight/ea (g)</label>
+                            <input type="number" id="pWeight" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="250" oninput="calcPreset()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">💧 Hydration (%)</label>
+                            <input type="number" id="pHyd" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🦠 Starter (%)</label>
+                            <input type="number" id="pStarter" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🧂 Salt (%)</label>
+                            <input type="number" step="0.1" id="pSalt" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🫒 Oil (%)</label>
+                            <input type="number" step="0.1" id="pOil" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🍯 Sugar (%)</label>
+                            <input type="number" step="0.1" id="pSugar" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t border-stone-100 dark:border-stone-700 pt-4 space-y-2">
+                        <div class="flex justify-between items-end mb-3">
+                            <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold">Dough Mix</p>
+                            <p class="text-xs font-bold text-stone-500 dark:text-stone-400">Total: <span id="pTotalOut">1000</span>g</p>
+                        </div>
+                        
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🌾 Flour</span>
+                            <span id="pOutFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">💧 Water</span>
+                            <span id="pOutWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🦠 Starter</span>
+                            <span id="pOutStarter" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🧂 Salt</span>
+                            <span id="pOutSalt" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div id="rowOil" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
+                            <span class="font-medium">🫒 Olive Oil</span>
+                            <span id="pOutOil" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div id="rowSugar" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
+                            <span class="font-medium">🍯 Sugar/Honey</span>
+                            <span id="pOutSugar" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-starter" class="page max-w-md mx-auto">
+            <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🦠 Starter Feeding</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🎯 Total Needed (g)</label>
+                        <input type="number" id="targetStarter" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="100" oninput="calcStarter('target')">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🌡️ Temp (°C)</label>
+                            <input type="number" id="temp" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="22" oninput="calcStarter('temp')">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⏱️ Peak Time (h)</label>
+                            <input type="number" step="0.5" id="time" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="5" oninput="calcStarter('time')">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Ratio (1 : X : X)</label>
+                        <input type="number" step="0.5" id="ratio" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="1" oninput="calcStarter('ratio')">
+                    </div>
+
+                    <div class="mt-6 border-t border-stone-100 dark:border-stone-700 pt-4 space-y-2">
+                        <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold mb-3">Feeding Mix</p>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🦠 Seed Starter</span>
+                            <span id="feedSeed" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">🌾 Flour</span>
+                            <span id="feedFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
+                            <span class="font-medium">💧 Water</span>
+                            <span id="feedWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-md mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-3">
+            <button onclick="toggleVersionModal()" class="text-xs font-bold bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-3 py-1 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition">
+                v1.4.0
+            </button>
+            <a href="https://github.com/shaygur98/Sourdough-Calculator" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition" aria-label="GitHub Repository">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
+            </a>
+        </div>
+        
+    </main>
+
+    <nav class="bg-white dark:bg-stone-900 pb-safe pt-2 px-2 shadow-[0_-1px_10px_rgba(0,0,0,0.05)] dark:shadow-none dark:border-t dark:border-stone-800 fixed bottom-0 w-full z-20 transition-colors duration-300">
+        <div class="flex justify-around max-w-md mx-auto mb-2">
+            
+            <button onclick="switchTab('recipe')" id="nav-recipe" class="nav-item active flex flex-col items-center gap-1 p-2 w-[30%]">
+                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
+                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Custom</span>
+            </button>
+
+            <button onclick="switchTab('presets')" id="nav-presets" class="nav-item flex flex-col items-center gap-1 p-2 w-[30%]">
+                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
+                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Breads</span>
+            </button>
+
+            <button onclick="switchTab('starter')" id="nav-starter" class="nav-item flex flex-col items-center gap-1 p-2 w-[30%]">
+                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
+                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                </svg>
+                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Starter</span>
+            </button>
+
+        </div>
+    </nav>
+
+    <script>
+        // Modal management
+        function toggleVersionModal() {
+            const modal = document.getElementById('versionModal');
+            const content = document.getElementById('versionModalContent');
+            
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Theme management
+        function initTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon-dark').classList.add('hidden');
+                document.getElementById('theme-icon-dark').classList.remove('block');
+                document.getElementById('theme-icon-light').classList.remove('hidden');
+                document.getElementById('theme-icon-light').classList.add('block');
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            document.getElementById('theme-icon-light').classList.toggle('hidden', !isDark);
+            document.getElementById('theme-icon-light').classList.toggle('block', isDark);
+            
+            document.getElementById('theme-icon-dark').classList.toggle('hidden', isDark);
+            document.getElementById('theme-icon-dark').classList.toggle('block', !isDark);
+        }
+
+        // Configuration presets
+        const presets = {
+            neapolitan: { hyd: 65, starter: 10, salt: 2.5, oil: 0, sugar: 0, weight: 250, count: 4 },
+            nypizza: { hyd: 62, starter: 15, salt: 2, oil: 3, sugar: 1.5, weight: 350, count: 3 },
+            focaccia: { hyd: 80, starter: 20, salt: 2.5, oil: 5, sugar: 0, weight: 800, count: 1 },
+            baguette: { hyd: 70, starter: 20, salt: 2, oil: 0, sugar: 0, weight: 350, count: 3 },
+            ciabatta: { hyd: 85, starter: 15, salt: 2, oil: 2, sugar: 0, weight: 400, count: 2 }
+        };
+
+        // Navigation logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            setTimeout(() => {
+                document.getElementById('page-' + tabId).classList.add('active');
+            }, 10);
+            
+            document.getElementById('nav-' + tabId).classList.add('active');
+        }
+
+        // Apply selected preset
+        function loadPreset() {
+            const key = document.getElementById('presetType').value;
+            const data = presets[key];
+            
+            document.getElementById('pQty').value = data.count;
+            document.getElementById('pWeight').value = data.weight;
+            document.getElementById('pHyd').value = data.hyd;
+            document.getElementById('pStarter').value = data.starter;
+            document.getElementById('pSalt').value = data.salt;
+            document.getElementById('pOil').value = data.oil;
+            document.getElementById('pSugar').value = data.sugar;
+            
+            calcPreset();
+        }
+
+        // Update preset dough calculations
+        function calcPreset() {
+            const qty = parseFloat(document.getElementById('pQty').value) || 0;
+            const weight = parseFloat(document.getElementById('pWeight').value) || 0;
+            const hyd = parseFloat(document.getElementById('pHyd').value) || 0;
+            const starterPct = parseFloat(document.getElementById('pStarter').value) || 0;
+            const saltPct = parseFloat(document.getElementById('pSalt').value) || 0;
+            const oilPct = parseFloat(document.getElementById('pOil').value) || 0;
+            const sugarPct = parseFloat(document.getElementById('pSugar').value) || 0;
+
+            const totalDough = qty * weight;
+            document.getElementById('pTotalOut').innerText = Math.round(totalDough);
+
+            const totalPercentage = 1 + (hyd / 100) + (saltPct / 100) + (oilPct / 100) + (sugarPct / 100);
+            const totalFlour = totalDough / totalPercentage;
+
+            const totalWater = totalFlour * (hyd / 100);
+            const salt = totalFlour * (saltPct / 100);
+            const oil = totalFlour * (oilPct / 100);
+            const sugar = totalFlour * (sugarPct / 100);
+            const starter = totalFlour * (starterPct / 100);
+
+            const starterFlour = starter / 2;
+            const starterWater = starter / 2;
+            
+            const mainFlour = totalFlour - starterFlour;
+            const mainWater = totalWater - starterWater;
+
+            document.getElementById('pOutFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
+            document.getElementById('pOutWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
+            document.getElementById('pOutStarter').innerText = Math.max(0, Math.round(starter)) + "g";
+            document.getElementById('pOutSalt').innerText = Math.max(0, Math.round(salt)) + "g";
+            document.getElementById('pOutOil').innerText = Math.max(0, Math.round(oil)) + "g";
+            document.getElementById('pOutSugar').innerText = Math.max(0, Math.round(sugar)) + "g";
+
+            document.getElementById('rowOil').classList.toggle('hidden-row', oil <= 0);
+            document.getElementById('rowSugar').classList.toggle('hidden-row', sugar <= 0);
+        }
+
+        // Update custom dough calculations
+        function calcRecipe() {
+            const totalDough = parseFloat(document.getElementById('totalDough').value) || 0;
+            const hydration = parseFloat(document.getElementById('hydration').value) || 0;
+            const starterPct = parseFloat(document.getElementById('starterPct').value) || 0;
+            const saltPct = parseFloat(document.getElementById('saltPct').value) || 0;
+
+            const totalPercentage = 1 + (hydration / 100) + (saltPct / 100);
+            const totalFlour = totalDough / totalPercentage;
+
+            const totalWater = totalFlour * (hydration / 100);
+            const salt = totalFlour * (saltPct / 100);
+            const starter = totalFlour * (starterPct / 100);
+
+            const starterFlour = starter / 2;
+            const starterWater = starter / 2;
+            
+            const mainFlour = totalFlour - starterFlour;
+            const mainWater = totalWater - starterWater;
+
+            document.getElementById('outFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
+            document.getElementById('outWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
+            document.getElementById('outStarter').innerText = Math.max(0, Math.round(starter)) + "g";
+            document.getElementById('outSalt').innerText = Math.max(0, Math.round(salt)) + "g";
+        }
+
+        // Update feeding requirements
+        function calcStarter(source) {
+            const target = parseFloat(document.getElementById('targetStarter').value) || 0;
+            let temp = parseFloat(document.getElementById('temp').value) || 22;
+            let time = parseFloat(document.getElementById('time').value) || 5;
+            let ratio = parseFloat(document.getElementById('ratio').value) || 1;
+
+            if (source === 'ratio' || source === 'temp' || source === 'target') {
+                time = 5 * Math.pow(ratio, 0.5) * Math.pow(0.9, temp - 22);
+                document.getElementById('time').value = time.toFixed(1);
+            } else if (source === 'time') {
+                ratio = Math.pow(time / (5 * Math.pow(0.9, temp - 22)), 2);
+                ratio = Math.max(0.1, ratio); 
+                document.getElementById('ratio').value = ratio.toFixed(1);
+            }
+
+            const parts = 1 + (ratio * 2);
+            const seed = target / parts;
+            const flourWater = seed * ratio;
+
+            document.getElementById('feedSeed').innerText = Math.round(seed) + "g";
+            document.getElementById('feedFlour').innerText = Math.round(flourWater) + "g";
+            document.getElementById('feedWater').innerText = Math.round(flourWater) + "g";
+        }
+
+        // Run initial setup
+        initTheme();
+        calcRecipe();
+        calcStarter('ratio');
+        loadPreset(); 
+    </script>
+</body>
+</html>
