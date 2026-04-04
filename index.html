@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sourdough Calculator</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEyOCIgZmlsbD0iI2I0NTMwOSIvPjxwYXRoIGQ9Ik0yNTYgMTQwQzE2MCAxNDAgMTEwIDIxMCAxMTAgMzIwYzAgMzAgMjAgNTAgNTAgNTBoMTkyYzMwIDAgNTAgLTIwIDUwIC01MCAwIC0xMTAtNTAgLTE4MC0xNDYgLTE4MHoiIGZpbGw9IiNmZWYzYzciLz48cGF0aCBkPSJNMjAwIDMyMCBMMzEyIDIxMCIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIyMTYiIGN5PSIyMjQiIHI9IjI0IiBmaWxsPSIjYjQ1MzA5Ii8+PGNpcmNsZSBjeD0iMjk2IiBjeT0iMzA0IiByPSIyNCIgZmlsbD0iI2I0NTMwOSIvPjwvc3ZnPg==">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEyOCIgZmlsbD0iI2I0NTMwOSIvPjxwYXRoIGQ9Ik0yNTYgMTQwQzE2MCAxNDAgMTEwIDIxMCAxMTAgMzIwYzAgMzAgMjAgNTAgNTAgNTBoMTkyYzMwIDAgNTAgLTIwIDUwIC01MCAwIC0xMTAtNTAgLTE4MC0xNDYgLTE4MHoiIGZpbGw9IiNmZWYzYzciLz48cGF0aCBkPSJNMjAwIDMyMCBMMzEyIDIxMCIgc3Ryb2tlPSIjYjQ1MzA5IiBzdHJva2Utd2lkdGg9IjI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIyMTYiIGN5PSIyMjQiIHI9IjI0IiBmaWxsPSIjYjQ1MzA5Ii8+PGNpcmNsZSBjeD0iMjk2IiBjeT0iMzA0IiByPSIyNCIgZmlsbD0iI2I0NTMwOSIvPjwvc3ZnPg==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNvdXJkb3VnaCBDYWxjdWxhdG9yIiwKICAic2hvcnRfbmFtZSI6ICJTb3VyZG91Z2giLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZhZmFmOSIsCiAgInRoZW1lX2NvbG9yIjogIiNiNDUzMDkiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhOQ2IzZzFJakFnTUNBMU1USWdOVEV5SWo0OGNtVmpkQ0IzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdjbWc5SWpFeU9DSWdabWxzYkQwaUkySTBOVE13T1NJdlBqeHdZWFJvSUdROUlrMHlOVFlnTVRRd1F6RTJNQ0F4TkRBZ01URXdJREl4TUNBeE1UQUdNMkl3WXpBZ016QWdNakFnTlRBZ05UQWdOVEJvTVRreVl6TXdJREFnTlRBZ3RJakFnTlRBZ3ROVEFnTUNBdE1URXdMVEV3SURSbE9UWWdMVEU0TUhvaUkyWnBiR3c5SWlObVpXWXpZemNpTHo0OGNHRjBhQ0JrUFNKTk1qQXdJRE15TUNCTU16RXlJREl4TUNJZ2MzUnliMnRsUFNJamNqUTFNekE1SWlCemRISnZhMlV0ZDJsa2RHaDAnSWpJNElpQnpkSEp2YTJVdGJHbHVaV05oY0QwZWNHOXdibVFpTHo0OFl5bHlZMnhsSUdONFBTSXlNVFlpSUdONVBTSXlNalFpSUhJOUlqSTBJaUJtYVd4c1BTSWpZalExTXpBNUlpdytQR05wY21Oc1pTQmpHRE01TmlJZ2VUMGlNekEwSWlCeVBTSXlOQ0lnWm1sc2JEMGlJMkkwTlRNd09TSXZQand2YzNaZ1BqPT0iLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiA1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+    <meta name="theme-color" content="#b45309">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         // Setup tailwind dark mode
@@ -40,7 +46,15 @@
             </div>
             <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
-                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v1.4.0</span>
+                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v1.6.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Updated salt, oil, and sugar outputs to show one decimal place for higher micro-ingredient precision.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.5.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Added native app installation manifest and a custom vector app icon.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.4.0</span>
                     <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Replaced emoji theme icons with modern minimalistic SVGs.</p>
                 </div>
                 <div>
@@ -54,10 +68,6 @@
                 <div>
                     <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.1.0</span>
                     <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Introduced Material 3 expressive navigation and starter feeding environment estimation.</p>
-                </div>
-                <div>
-                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.0.0</span>
-                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Initial release. Basic recipe generation based on reverse baker's percentages.</p>
                 </div>
             </div>
         </div>
@@ -197,15 +207,15 @@
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
                             <span class="font-medium">🧂 Salt</span>
-                            <span id="pOutSalt" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                            <span id="pOutSalt" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                         <div id="rowOil" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
                             <span class="font-medium">🫒 Olive Oil</span>
-                            <span id="pOutOil" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                            <span id="pOutOil" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                         <div id="rowSugar" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
                             <span class="font-medium">🍯 Sugar/Honey</span>
-                            <span id="pOutSugar" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
+                            <span id="pOutSugar" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                     </div>
                 </div>
@@ -259,7 +269,7 @@
 
         <div class="max-w-md mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-3">
             <button onclick="toggleVersionModal()" class="text-xs font-bold bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-3 py-1 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition">
-                v1.4.0
+                v1.6.0
             </button>
             <a href="https://github.com/shaygur98/Sourdough-Calculator" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition" aria-label="GitHub Repository">
                 <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -410,9 +420,11 @@
             document.getElementById('pOutFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
             document.getElementById('pOutWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
             document.getElementById('pOutStarter').innerText = Math.max(0, Math.round(starter)) + "g";
-            document.getElementById('pOutSalt').innerText = Math.max(0, Math.round(salt)) + "g";
-            document.getElementById('pOutOil').innerText = Math.max(0, Math.round(oil)) + "g";
-            document.getElementById('pOutSugar').innerText = Math.max(0, Math.round(sugar)) + "g";
+            
+            // Updated micro-ingredients to show 1 decimal point
+            document.getElementById('pOutSalt').innerText = Math.max(0, salt).toFixed(1) + "g";
+            document.getElementById('pOutOil').innerText = Math.max(0, oil).toFixed(1) + "g";
+            document.getElementById('pOutSugar').innerText = Math.max(0, sugar).toFixed(1) + "g";
 
             document.getElementById('rowOil').classList.toggle('hidden-row', oil <= 0);
             document.getElementById('rowSugar').classList.toggle('hidden-row', sugar <= 0);
@@ -441,7 +453,9 @@
             document.getElementById('outFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
             document.getElementById('outWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
             document.getElementById('outStarter').innerText = Math.max(0, Math.round(starter)) + "g";
-            document.getElementById('outSalt').innerText = Math.max(0, Math.round(salt)) + "g";
+            
+            // Updated salt to show 1 decimal point
+            document.getElementById('outSalt').innerText = Math.max(0, salt).toFixed(1) + "g";
         }
 
         // Update feeding requirements
