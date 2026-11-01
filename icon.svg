@@ -1,7 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="128" fill="#b45309"/>
-  <path d="M256 140C160 140 110 210 110 320c0 30 20 50 50 50h192c30 0 50 -20 50 -50 0 -110-50 -180-146 -180z" fill="#fef3c7"/>
-  <path d="M200 320 L312 210" stroke="#b45309" stroke-width="28" stroke-linecap="round"/>
-  <circle cx="216" cy="224" r="24" fill="#b45309"/>
-  <circle cx="296" cy="304" r="24" fill="#b45309"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e08a12"/><stop offset="1" stop-color="#a84b07"/></linearGradient>
+    <linearGradient id="crust" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#f3d39a"/></linearGradient>
+    <filter id="soft" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <ellipse cx="256" cy="370" rx="160" ry="16" fill="#5a2603" opacity=".35" filter="url(#soft)"/>
+  <path d="M124 364C102 364 92 346 96 324C112 222 176 148 256 148C336 148 400 222 416 324C420 346 410 364 388 364Z" fill="url(#crust)"/>
+  <path d="M146 262C166 212 206 180 256 174" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="10" stroke-linecap="round"/>
+  <path d="M204 318L308 202" stroke="#a84b07" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="212" cy="226" r="23" fill="#a84b07"/>
+  <circle cx="300" cy="294" r="23" fill="#a84b07"/>
 </svg>

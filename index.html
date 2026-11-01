@@ -7,7 +7,8 @@
     
     <!-- Link to the new external files -->
     <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#b45309">
 
@@ -16,17 +17,266 @@
         tailwind.config = { darkMode: 'class', }
     </script>
     <style>
-        .page { display: none; opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease, transform 0.3s ease; }
-        .page.active { display: block; opacity: 1; transform: translateY(0); }
-        .nav-item { position: relative; transition: all 0.3s ease; }
-        .nav-item.active .pill { background-color: #fef3c7; transform: scale(1.1); border-radius: 9999px; }
-        .nav-item.active .icon { color: #b45309; }
+        /* Motion: spring curves inspired by Material 3 Expressive (cubic-bezier fallback for older browsers) */
+        :root {
+            /* Overshoot: bouncy ~16%, lively ~5.6% */
+            --bouncy: cubic-bezier(0.34, 1.4, 0.64, 1);
+            --bouncy: linear(0, 0.024, 0.088, 0.182, 0.294, 0.415, 0.539, 0.659, 0.77, 0.869, 0.953, 1.022, 1.077, 1.116, 1.142, 1.156, 1.16, 1.156, 1.145, 1.13, 1.112, 1.092, 1.073, 1.053, 1.036, 1.02, 1.007, 0.996, 0.987, 0.981, 0.977, 0.975, 0.974, 0.975, 0.977, 0.979, 0.982, 0.985, 0.989, 0.992, 1);
+            --lively: cubic-bezier(0.3, 1.2, 0.6, 1);
+            --lively: linear(0, 0.021, 0.074, 0.151, 0.241, 0.339, 0.438, 0.535, 0.625, 0.708, 0.781, 0.845, 0.899, 0.943, 0.978, 1.006, 1.026, 1.04, 1.05, 1.054, 1.056, 1.055, 1.052, 1.048, 1.043, 1.037, 1.032, 1.026, 1.021, 1.017, 1.012, 1.009, 1);
+        }
+
+        .page { display: none; }
+        .page.active { display: block; animation: pageIn 0.6s var(--lively) both; }
+        /* Cards and result rows arrive one after another */
+        .page.active .rounded-3xl { animation: cardIn 0.75s var(--bouncy) both; }
+        .page.active > .space-y-4 > :nth-child(2) { animation-delay: 70ms; }
+        .page.active > .space-y-4 > :nth-child(3) { animation-delay: 140ms; }
+        .page.active .border-t.space-y-2 > div { animation: rowIn 0.6s var(--bouncy) both; }
+        .page.active .border-t.space-y-2 > div:nth-child(3) { animation-delay: 60ms; }
+        .page.active .border-t.space-y-2 > div:nth-child(4) { animation-delay: 100ms; }
+        .page.active .border-t.space-y-2 > div:nth-child(5) { animation-delay: 140ms; }
+        .page.active .border-t.space-y-2 > div:nth-child(6) { animation-delay: 180ms; }
+        .page.active .border-t.space-y-2 > div:nth-child(7) { animation-delay: 220ms; }
+        .page.active .border-t.space-y-2 > div:nth-child(8) { animation-delay: 260ms; }
+
+        /* Navigation: the pill stretches into place and the icon hops */
+        .nav-item { position: relative; }
+        .nav-item .pill { border-radius: 9999px; opacity: 0; transform: scale(0.5, 0.72); transition: transform 0.6s var(--bouncy), opacity 0.2s ease, background-color 0.3s ease; }
+        .nav-item.active .pill { background-color: #fef3c7; opacity: 1; transform: scale(1); }
+        .nav-item .icon { transition: color 0.3s ease; }
+        .nav-item.active .icon { color: #b45309; animation: navHop 0.6s var(--lively); }
         .dark .nav-item.active .pill { background-color: #451a03; }
         .dark .nav-item.active .icon { color: #fbbf24; }
+
+        /* Everything you press squishes and springs back */
+        button, button[class] { transition: transform 0.45s var(--bouncy), border-radius 0.45s var(--bouncy), background-color 0.2s ease, color 0.2s ease; }
+        button:active, button[class]:active { transform: scale(0.94); }
+        .btn-morph { border-radius: 0.75rem; }
+        .btn-morph:active { border-radius: 1.5rem; transform: scale(0.97); }
+        input[type=number], input[type=time], input[type=datetime-local], select { transition: transform 0.45s var(--bouncy), box-shadow 0.2s ease; }
+        input[type=number]:focus, input[type=time]:focus, input[type=datetime-local]:focus, select:focus { transform: scale(1.014); }
+
+        /* Things that appear pop in */
+        #rowOil, #rowSugar, #outRowOil, #outRowSugar { animation: rowIn 0.6s var(--bouncy) both; }
+        #warn:not(.hidden-row), #pWarn:not(.hidden-row) { animation: warnIn 0.7s var(--bouncy) both; }
+        #toast:not(.hidden-row) > div { animation: toastIn 0.7s var(--bouncy) both; }
+        #toast.leaving > div { animation: toastOut 0.25s ease-in both; }
+        #theme-icon-light, #theme-icon-dark { animation: spinIn 0.7s var(--bouncy); }
+        header img { animation: logoIn 1s var(--bouncy) 0.1s both; }
+        #versionModalContent { transition-timing-function: var(--bouncy) !important; transition-duration: 0.55s !important; }
+        details[open] #tlStepTimes { animation: rowIn 0.5s var(--bouncy) both; }
+        .bump { display: inline-block; animation: bump 0.5s var(--bouncy); }
+        .tl-in { animation: rowIn 0.6s var(--bouncy) both; animation-delay: calc(var(--i, 0) * 45ms); }
+        .pop { animation: pop 0.6s var(--bouncy); }
+        /* Current step: the icon cycles through stages (3 frames, 0.8s each) inside a filling progress ring */
+        .stages .fr { opacity: 0; transform-box: fill-box; transform-origin: center bottom; animation: stage 2.4s infinite; }
+        .stages .f0 { animation-delay: var(--t0, 0ms); }
+        .stages .f1 { animation-delay: calc(var(--t0, 0ms) + 800ms); }
+        .stages .f2 { animation-delay: calc(var(--t0, 0ms) + 1600ms); }
+        /* Named "progress-*" because Tailwind's own .ring class draws a blue outline */
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring circle { fill: none; stroke-width: 3; stroke-linecap: round; }
+        .progress-track { stroke: #f59e0b; stroke-opacity: 0.2; }
+        .progress-bar { stroke: #d97706; }
+        .dark .progress-bar { stroke: #fbbf24; }
+        .progress-in .progress-bar { animation: ringIn 1.2s var(--lively) 0.2s both; }
+        .armed { background: #fee2e2 !important; color: #b91c1c !important; animation: wiggle 0.5s var(--lively); }
+        .dark .armed { background: rgba(127, 29, 29, 0.5) !important; color: #fecaca !important; }
+
+        @keyframes pageIn { from { opacity: 0; transform: translateY(18px); } }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(20px) scale(0.96); } }
+        @keyframes rowIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } }
+        @keyframes warnIn { from { opacity: 0; transform: scale(0.9) rotate(-1deg); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(110%) scale(0.93); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateY(40%) scale(0.96); } }
+        @keyframes spinIn { from { transform: rotate(-85deg) scale(0.58); opacity: 0; } }
+        @keyframes logoIn { from { transform: rotate(-18deg) scale(0.5); opacity: 0; } }
+        @keyframes navHop { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-3.5px) scale(1.12); } 100% { transform: translateY(0) scale(1); } }
+        @keyframes bump { from { transform: scale(1.15); } }
+        @keyframes pop { from { transform: scale(0.58); } }
+        @keyframes stage {
+            0% { opacity: 0; transform: scale(0.82); animation-timing-function: var(--bouncy); }
+            10% { opacity: 1; transform: scale(1); }
+            33% { opacity: 1; transform: scale(1); }
+            41%, 100% { opacity: 0; transform: scale(1); }
+        }
+        @keyframes ringIn { from { stroke-dashoffset: 125.7; } }
+        @keyframes wiggle { 25% { transform: rotate(-1.4deg) scale(1.014); } 75% { transform: rotate(1.4deg) scale(1.014); } }
+        @keyframes segPop { from { transform: scale(0.9); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
         .hidden-row { display: none !important; }
+
+        /* Icon set: outlined strokes with a soft duotone fill, colored by currentColor */
+        :where(.ic) { width: 1.15em; height: 1.15em; }
+        .ic { flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+        label .ic { color: #b45309; }
+        .dark label .ic { color: #f59e0b; }
+        .chip { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 9999px; background: #fef3c7; color: #b45309; font-size: 1.05rem; }
+        .chip-lg { width: 2.5rem; height: 2.5rem; border-radius: 0.9rem; font-size: 1.35rem; }
+        .dark .chip { background: rgba(120, 53, 15, 0.45); color: #fbbf24; }
+
+        /* Segmented controls (radio + span) and toggle switches */
+        .seg { display: block; padding: 0.35rem 0.75rem; border-radius: 0.5rem; font-weight: 600; color: #78716c; cursor: pointer; text-align: center; transition: all 0.2s ease; }
+        .seg-input:checked + .seg { background: #fff; color: #b45309; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); animation: segPop 0.5s var(--bouncy); }
+        .dark .seg { color: #a8a29e; }
+        .dark .seg-input:checked + .seg { background: #44403c; color: #fbbf24; }
+        .toggle { appearance: none; -webkit-appearance: none; width: 2.6rem; height: 1.5rem; border-radius: 9999px; background: #d6d3d1; position: relative; flex-shrink: 0; cursor: pointer; transition: background 0.2s ease; }
+        .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 1.125rem; height: 1.125rem; border-radius: 9999px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.55s var(--bouncy), width 0.3s var(--lively); }
+        .toggle:checked { background: #d97706; }
+        .toggle:checked::after { transform: translateX(1.1rem); }
+        /* Thumb stretches while pressed, like M3 switches */
+        .toggle:active::after { width: 1.35rem; }
+        .toggle:checked:active::after { transform: translateX(0.875rem); }
+        .dark .toggle { background: #57534e; }
+        .dark .toggle:checked { background: #d97706; }
     </style>
 </head>
 <body class="bg-stone-50 text-stone-800 dark:bg-stone-900 dark:text-stone-100 h-screen flex flex-col font-sans selection:bg-amber-200 transition-colors duration-300">
+
+    <!-- Icon sprite: reference with <svg class="ic"><use href="#i-name"/></svg> -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-wheat" viewBox="0 0 24 24">
+            <path d="M12 21V9"/>
+            <path d="M12 9c-1.3-1.3-1.3-4 0-5.8c1.3 1.8 1.3 4.5 0 5.8z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 13c-2.6 0-4.2-1.4-4.7-3.7c2.4 0 4.1 1.2 4.7 3.7z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 13c2.6 0 4.2-1.4 4.7-3.7c-2.4 0-4.1 1.2-4.7 3.7z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 17.5c-2.6 0-4.2-1.4-4.7-3.7c2.4 0 4.1 1.2 4.7 3.7z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 17.5c2.6 0 4.2-1.4 4.7-3.7c-2.4 0-4.1 1.2-4.7 3.7z" fill="currentColor" fill-opacity=".18"/>
+        </symbol>
+        <symbol id="i-drop" viewBox="0 0 24 24">
+            <path d="M12 3c3 3.7 6.2 7.2 6.2 11a6.2 6.2 0 0 1-12.4 0c0-3.8 3.2-7.3 6.2-11z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M9.3 14.6a2.8 2.8 0 0 0 2.4 2.6"/>
+        </symbol>
+        <symbol id="i-jar" viewBox="0 0 24 24">
+            <rect x="7" y="2.8" width="10" height="3.2" rx="1"/>
+            <path d="M5.5 13.2c1.4-.8 2.9-.8 4.3 0s3 .8 4.4 0s3-.8 4.3 0V19a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2z" fill="currentColor" fill-opacity=".18" stroke="none"/>
+            <path d="M7.8 6v1.3C6.3 8.1 5.5 9.3 5.5 11v8a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-8c0-1.7-.8-2.9-2.3-3.7V6"/>
+            <path d="M5.5 13.2c1.4-.8 2.9-.8 4.3 0s3 .8 4.4 0s3-.8 4.3 0"/>
+            <circle cx="9.5" cy="17.3" r=".9"/><circle cx="14" cy="18.3" r=".7"/><circle cx="13.4" cy="15.6" r=".5"/>
+        </symbol>
+        <symbol id="i-salt" viewBox="0 0 24 24">
+            <path d="M8 9.5c0-3.3 1.8-5.5 4-5.5s4 2.2 4 5.5z"/>
+            <path d="M8 9.5h8l1 10a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M8.4 13.5h7.2"/>
+            <circle cx="10.6" cy="7.3" r=".6" fill="currentColor" stroke="none"/><circle cx="13.4" cy="7.3" r=".6" fill="currentColor" stroke="none"/><circle cx="12" cy="5.8" r=".6" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-oil" viewBox="0 0 24 24">
+            <path d="M10 2.5h4"/>
+            <path d="M10.5 2.5v3c0 1.4-3.5 2.6-3.5 5.5v8a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-8c0-2.9-3.5-4.1-3.5-5.5v-3" fill="currentColor" fill-opacity=".18"/>
+            <ellipse cx="12" cy="15.5" rx="2" ry="2.7" transform="rotate(-20 12 15.5)"/>
+            <path d="M13.2 13c.8-1 1.8-1.4 2.8-1.3"/>
+        </symbol>
+        <symbol id="i-honey" viewBox="0 0 24 24">
+            <path d="M6.2 10h11.6v6.5a4.5 4.5 0 0 1-4.5 4.5h-2.6a4.5 4.5 0 0 1-4.5-4.5z" fill="currentColor" fill-opacity=".18"/>
+            <rect x="5" y="7.5" width="14" height="2.5" rx="1.25"/>
+            <path d="M9.2 10v2.6a1 1 0 0 0 2 0v-1.2"/>
+            <path d="M14.8 7.5l2.6-4.3"/><circle cx="17.9" cy="2.9" r=".9" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-scale" viewBox="0 0 24 24">
+            <path d="M4.5 7h15"/><path d="M8 7v3.5"/><path d="M16 7v3.5"/>
+            <rect x="3" y="10.5" width="18" height="8.5" rx="2.5" fill="currentColor" fill-opacity=".18"/>
+            <rect x="8.5" y="13.2" width="7" height="3" rx=".8"/>
+        </symbol>
+        <symbol id="i-balance" viewBox="0 0 24 24">
+            <circle cx="12" cy="4" r="1.2"/><path d="M12 5.2V20"/><path d="M8 20h8"/><path d="M4.5 7.5h15"/>
+            <path d="M4.5 7.5L2.3 13a2.2 2.2 0 0 0 4.4 0z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M19.5 7.5L17.3 13a2.2 2.2 0 0 0 4.4 0z" fill="currentColor" fill-opacity=".18"/>
+        </symbol>
+        <symbol id="i-thermo" viewBox="0 0 24 24">
+            <path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 16.5V9"/><circle cx="12" cy="17" r="1.6" fill="currentColor" stroke="none"/>
+            <path d="M16.5 6h1.5"/><path d="M16.5 9h1.5"/>
+        </symbol>
+        <symbol id="i-timer" viewBox="0 0 24 24">
+            <circle cx="12" cy="13.5" r="7.5" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 13.5V9.5"/><path d="M12 13.5l2.6 1.6"/><path d="M10 2.5h4"/><path d="M12 2.5V6"/><path d="M18.4 6.6l1.3-1.3"/>
+        </symbol>
+        <symbol id="i-target" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="8.5"/>
+            <circle cx="12" cy="12" r="5" fill="currentColor" fill-opacity=".18"/>
+            <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-balls" viewBox="0 0 24 24">
+            <circle cx="12" cy="8.3" r="4" fill="currentColor" fill-opacity=".18"/>
+            <circle cx="7.6" cy="15.7" r="4" fill="currentColor" fill-opacity=".18"/>
+            <circle cx="16.4" cy="15.7" r="4" fill="currentColor" fill-opacity=".18"/>
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+            <path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2c1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 6.5v13"/>
+        </symbol>
+        <symbol id="i-loaf" viewBox="0 0 24 24">
+            <path d="M3.5 14.5c0-4.7 3.8-8.5 8.5-8.5s8.5 3.8 8.5 8.5v3a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M8 10.5l1.6 2.6"/><path d="M11.3 9.5l1.6 2.6"/><path d="M14.6 10.5l1.6 2.6"/>
+        </symbol>
+        <symbol id="i-baguette" viewBox="0 0 24 24">
+            <path d="M4.2 19.8c-1.3-1.3-.6-4 1.6-6.2l8-8c2.2-2.2 4.9-2.9 6.2-1.6s.6 4-1.6 6.2l-8 8c-2.2 2.2-4.9 2.9-6.2 1.6z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M6.9 15.6l2.7-1.8"/><path d="M10.3 12.2l2.7-1.8"/><path d="M13.7 8.8l2.7-1.8"/>
+        </symbol>
+        <symbol id="i-pizza" viewBox="0 0 24 24">
+            <path d="M12 21L4 6.5c4.8-2.7 11.2-2.7 16 0z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M5.3 8.9c4.3-2.2 9.1-2.2 13.4 0"/>
+            <circle cx="10" cy="11" r="1.3"/><circle cx="14.2" cy="11.8" r="1.1"/><circle cx="12" cy="15.6" r="1"/>
+        </symbol>
+        <symbol id="i-focaccia" viewBox="0 0 24 24">
+            <rect x="3" y="6" width="18" height="12" rx="3" fill="currentColor" fill-opacity=".18"/>
+            <circle cx="7" cy="10" r=".9" fill="currentColor" stroke="none"/><circle cx="10.8" cy="9.4" r=".9" fill="currentColor" stroke="none"/>
+            <circle cx="8.4" cy="14" r=".9" fill="currentColor" stroke="none"/><circle cx="12.4" cy="13.6" r=".9" fill="currentColor" stroke="none"/>
+            <circle cx="17" cy="14.6" r=".9" fill="currentColor" stroke="none"/>
+            <path d="M14.5 8.5l3.5 3.5"/><path d="M15.7 9.7l.3-1.5"/><path d="M16.9 10.9l1.5-.3"/>
+        </symbol>
+        <symbol id="i-ciabatta" viewBox="0 0 24 24">
+            <path d="M3 15.5c0-3 2.5-5 5-5.5c2-.4 3-1.5 5-1.5c4 0 8 2.5 8 6c0 2.5-2 3.5-4 3.5H6.5C4.5 18 3 17.5 3 15.5z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M8.5 12.8c1.6.6 3.3.4 5-.6"/>
+            <circle cx="7" cy="15" r=".6" fill="currentColor" stroke="none"/><circle cx="12" cy="15.4" r=".6" fill="currentColor" stroke="none"/>
+            <circle cx="16.5" cy="13" r=".6" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.8" r=".6" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-warn" viewBox="0 0 24 24">
+            <path d="M10.3 4.2L2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 9.5V14"/><circle cx="12" cy="17.2" r=".7" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-mix" viewBox="0 0 24 24">
+            <path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12.5 11.5L17 3.5"/><path d="M15.3 11.5l3.9-6.2"/>
+        </symbol>
+        <symbol id="i-bulk" viewBox="0 0 24 24">
+            <path d="M6.5 11.5c0-3.6 2.5-6 5.5-6s5.5 2.4 5.5 6" fill="currentColor" fill-opacity=".18"/>
+            <path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z" fill="currentColor" fill-opacity=".18"/>
+            <circle cx="10" cy="9" r=".7" fill="currentColor" stroke="none"/><circle cx="13.6" cy="8" r=".6" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="i-fridge" viewBox="0 0 24 24">
+            <rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="currentColor" fill-opacity=".18"/>
+            <path d="M6 9.5h12"/><path d="M9 5.3v1.6"/><path d="M9 12.5v3"/>
+        </symbol>
+        <symbol id="i-flame" viewBox="0 0 24 24">
+            <path d="M12 21.5c3.6 0 6-2.5 6-5.8c0-3.7-3-6-4.2-9.7c-2.2 1.7-3.3 3.7-3.3 6c-1-.6-1.6-1.6-1.8-2.8C7.2 10.6 6 12.8 6 15.7c0 3.3 2.4 5.8 6 5.8z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M12 19a2 2 0 0 0 2-2c0-1.3-1-2.1-2-3.5c-1 1.4-2 2.2-2 3.5a2 2 0 0 0 2 2z"/>
+        </symbol>
+        <symbol id="i-oven" viewBox="0 0 24 24">
+            <rect x="3" y="3.5" width="18" height="17" rx="2.5" fill="currentColor" fill-opacity=".18"/>
+            <rect x="6" y="10" width="12" height="7.5" rx="1.5"/>
+            <circle cx="7" cy="6.8" r=".7" fill="currentColor" stroke="none"/><circle cx="10" cy="6.8" r=".7" fill="currentColor" stroke="none"/>
+            <path d="M14 6.8h4"/>
+        </symbol>
+        <symbol id="i-cool" viewBox="0 0 24 24">
+            <path d="M8 13c-1-1.3-1-2.7 0-4s1-2.7 0-4"/><path d="M12 13c-1-1.3-1-2.7 0-4s1-2.7 0-4"/><path d="M16 13c-1-1.3-1-2.7 0-4s1-2.7 0-4"/>
+            <path d="M3.5 16.5h17"/><path d="M6 16.5V20"/><path d="M18 16.5V20"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+            <path d="M5 12.5l4.5 4.5L19 7.5"/>
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="currentColor" fill-opacity=".18"/>
+        </symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24">
+            <path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z" fill="currentColor" fill-opacity=".18"/>
+            <path d="M10 20.5a2 2 0 0 0 4 0"/>
+        </symbol>
+    </svg>
 
     <div id="versionModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
         <div class="bg-white dark:bg-stone-900 rounded-3xl shadow-xl w-full max-w-sm p-6 transform scale-95 transition-transform duration-300" id="versionModalContent">
@@ -38,7 +288,35 @@
             </div>
             <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
-                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v1.7.0</span>
+                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v2.3.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Refreshed app icon with a proper loaf shape and crust shading, plus sharp PNG icons for iPhone and Android home screens and notifications.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.2.1</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Animations are about 30% less bouncy, and the stray blue square around the current step is gone.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.2.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">The step you're on now animates through stages (dough rising, starter filling the jar, the oven glowing…) inside a ring that fills as the step goes on.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.1.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Bouncy, springy animations throughout the app, and End bake now asks for a second tap instead of a browser dialog (which could be silently blocked).</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.0.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">New Timeline tab: plans your bake around a ready time or starts now, keeps steps out of your sleep hours, lets you customize step times, and sends gentle reminders while you bake.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.9.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Replaced emojis with a custom hand-drawn icon set, including bread-style icons and new tab icons.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.8.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Works fully offline, remembers your inputs and theme, warns on impossible starter/hydration combos, and adds oil &amp; sugar to Custom Recipe.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v1.7.0</span>
                     <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Split app into proper PWA files (manifest, sw.js) to trigger native Android install prompt.</p>
                 </div>
                 <div>
@@ -54,7 +332,7 @@
     </div>
 
     <header class="bg-white dark:bg-stone-900 shadow-sm dark:shadow-none dark:border-b dark:border-stone-800 p-4 flex justify-between items-center z-10 transition-colors duration-300">
-        <div class="w-8"></div> <h1 class="text-xl font-extrabold text-amber-700 dark:text-amber-500 tracking-tight">🌾 Sourdough Calculator</h1>
+        <div class="w-8"></div> <h1 class="text-xl font-extrabold text-amber-700 dark:text-amber-500 tracking-tight flex items-center gap-2"><img src="icon.svg" alt="" class="w-7 h-7">Sourdough Calculator</h1>
         <button onclick="toggleTheme()" class="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 transition" aria-label="Toggle Dark Mode">
             <span id="theme-icon-light" class="hidden">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -69,45 +347,64 @@
         
         <div id="page-recipe" class="page active max-w-md mx-auto">
             <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
-                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🍞 Custom Recipe</h2>
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2"><span class="chip chip-lg"><svg class="ic"><use href="#i-loaf"/></svg></span>Custom Recipe</h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Total Dough (g)</label>
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-scale"/></svg>Total Dough (g)</label>
                         <input type="number" id="totalDough" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="1000" oninput="calcRecipe()">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">💧 Hydration (%)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-drop"/></svg>Hydration (%)</label>
                             <input type="number" id="hydration" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="75" oninput="calcRecipe()">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🦠 Starter (%)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-jar"/></svg>Starter (%)</label>
                             <input type="number" id="starterPct" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="20" oninput="calcRecipe()">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🧂 Salt (%)</label>
-                        <input type="number" id="saltPct" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="2" oninput="calcRecipe()">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-salt"/></svg>Salt (%)</label>
+                            <input type="number" step="0.1" id="saltPct" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" value="2" oninput="calcRecipe()">
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-oil"/></svg>Oil (%)</label>
+                            <input type="number" step="0.1" id="oilPct" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" value="0" oninput="calcRecipe()">
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-honey"/></svg>Sugar (%)</label>
+                            <input type="number" step="0.1" id="sugarPct" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" value="0" oninput="calcRecipe()">
+                        </div>
                     </div>
 
                     <div class="mt-6 border-t border-stone-100 dark:border-stone-700 pt-4 space-y-2">
                         <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold mb-3">Required Ingredients</p>
+                        <div id="warn" class="hidden-row flex gap-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-xl"><svg class="ic mt-px"><use href="#i-warn"/></svg><span></span></div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🌾 Flour</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-wheat"/></svg></span>Flour</span>
                             <span id="outFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">💧 Water</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-drop"/></svg></span>Water</span>
                             <span id="outWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🦠 Starter</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-jar"/></svg></span>Starter</span>
                             <span id="outStarter" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🧂 Salt</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-salt"/></svg></span>Salt</span>
                             <span id="outSalt" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
+                        </div>
+                        <div id="outRowOil" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-oil"/></svg></span>Olive Oil</span>
+                            <span id="outOil" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
+                        </div>
+                        <div id="outRowSugar" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-honey"/></svg></span>Sugar/Honey</span>
+                            <span id="outSugar" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                     </div>
                 </div>
@@ -116,53 +413,56 @@
 
         <div id="page-presets" class="page max-w-md mx-auto">
             <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
-                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🥖 Common Breads</h2>
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2"><span class="chip chip-lg"><svg class="ic"><use href="#i-baguette"/></svg></span>Common Breads</h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">📖 Select Style</label>
-                        <select id="presetType" onchange="loadPreset()" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500 appearance-none font-medium">
-                            <option value="neapolitan">🍕 Neapolitan Pizza</option>
-                            <option value="nypizza">🍕 NY Style Pizza</option>
-                            <option value="focaccia">🌿 Focaccia</option>
-                            <option value="baguette">🥖 Baguette</option>
-                            <option value="ciabatta">🥪 Ciabatta</option>
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-book"/></svg>Select Style</label>
+                        <div class="flex items-center gap-3">
+                        <span class="chip chip-lg"><svg class="ic"><use id="presetIcon" href="#i-pizza"/></svg></span>
+                        <select id="presetType" onchange="loadPreset()" class="flex-1 p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500 appearance-none font-medium">
+                            <option value="neapolitan">Neapolitan Pizza</option>
+                            <option value="nypizza">NY Style Pizza</option>
+                            <option value="focaccia">Focaccia</option>
+                            <option value="baguette">Baguette</option>
+                            <option value="ciabatta">Ciabatta</option>
                         </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🔢 Quantity</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-balls"/></svg>Quantity</label>
                             <input type="number" id="pQty" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="4" oninput="calcPreset()">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Weight/ea (g)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-scale"/></svg>Weight/ea (g)</label>
                             <input type="number" id="pWeight" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="250" oninput="calcPreset()">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">💧 Hydration (%)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-drop"/></svg>Hydration (%)</label>
                             <input type="number" id="pHyd" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🦠 Starter (%)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-jar"/></svg>Starter (%)</label>
                             <input type="number" id="pStarter" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🧂 Salt (%)</label>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-salt"/></svg>Salt (%)</label>
                             <input type="number" step="0.1" id="pSalt" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🫒 Oil (%)</label>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-oil"/></svg>Oil (%)</label>
                             <input type="number" step="0.1" id="pOil" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1">🍯 Sugar (%)</label>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-honey"/></svg>Sugar (%)</label>
                             <input type="number" step="0.1" id="pSugar" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500" oninput="calcPreset()">
                         </div>
                     </div>
@@ -172,29 +472,30 @@
                             <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold">Dough Mix</p>
                             <p class="text-xs font-bold text-stone-500 dark:text-stone-400">Total: <span id="pTotalOut">1000</span>g</p>
                         </div>
+                        <div id="pWarn" class="hidden-row flex gap-2 text-sm bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded-xl"><svg class="ic mt-px"><use href="#i-warn"/></svg><span></span></div>
                         
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🌾 Flour</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-wheat"/></svg></span>Flour</span>
                             <span id="pOutFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">💧 Water</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-drop"/></svg></span>Water</span>
                             <span id="pOutWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🦠 Starter</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-jar"/></svg></span>Starter</span>
                             <span id="pOutStarter" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🧂 Salt</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-salt"/></svg></span>Salt</span>
                             <span id="pOutSalt" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                         <div id="rowOil" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
-                            <span class="font-medium">🫒 Olive Oil</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-oil"/></svg></span>Olive Oil</span>
                             <span id="pOutOil" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                         <div id="rowSugar" class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl hidden-row">
-                            <span class="font-medium">🍯 Sugar/Honey</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-honey"/></svg></span>Sugar/Honey</span>
                             <span id="pOutSugar" class="font-bold text-amber-700 dark:text-amber-400">0.0g</span>
                         </div>
                     </div>
@@ -204,42 +505,42 @@
 
         <div id="page-starter" class="page max-w-md mx-auto">
             <div class="bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
-                <h2 class="text-lg font-bold mb-5 flex items-center gap-2">🦠 Starter Feeding</h2>
+                <h2 class="text-lg font-bold mb-5 flex items-center gap-2"><span class="chip chip-lg"><svg class="ic"><use href="#i-jar"/></svg></span>Starter Feeding</h2>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🎯 Total Needed (g)</label>
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-target"/></svg>Total Needed (g)</label>
                         <input type="number" id="targetStarter" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="100" oninput="calcStarter('target')">
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">🌡️ Temp (°C)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-thermo"/></svg>Temp (°C)</label>
                             <input type="number" id="temp" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="22" oninput="calcStarter('temp')">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⏱️ Peak Time (h)</label>
+                            <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-timer"/></svg>Peak Time (h)</label>
                             <input type="number" step="0.5" id="time" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="5" oninput="calcStarter('time')">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-stone-600 dark:text-stone-400 mb-1">⚖️ Ratio (1 : X : X)</label>
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-balance"/></svg>Ratio (1 : X : X)</label>
                         <input type="number" step="0.5" id="ratio" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500" value="1" oninput="calcStarter('ratio')">
                     </div>
 
                     <div class="mt-6 border-t border-stone-100 dark:border-stone-700 pt-4 space-y-2">
                         <p class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold mb-3">Feeding Mix</p>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🦠 Seed Starter</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-jar"/></svg></span>Seed Starter</span>
                             <span id="feedSeed" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">🌾 Flour</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-wheat"/></svg></span>Flour</span>
                             <span id="feedFlour" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                         <div class="flex justify-between items-center bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl">
-                            <span class="font-medium">💧 Water</span>
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-drop"/></svg></span>Water</span>
                             <span id="feedWater" class="font-bold text-amber-700 dark:text-amber-400">0g</span>
                         </div>
                     </div>
@@ -247,9 +548,90 @@
             </div>
         </div>
 
+        <div id="page-timeline" class="page max-w-md mx-auto">
+            <div class="space-y-4">
+                <!-- Which bread this timeline is for -->
+                <div class="bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <p id="tlMakingLabel" class="text-xs uppercase tracking-wider text-stone-400 dark:text-stone-500 font-bold">You're making</p>
+                        <div id="tlSource" class="flex bg-stone-100 dark:bg-stone-900 rounded-lg p-0.5 text-xs">
+                            <label><input type="radio" name="tlSource" id="tlSrcCustom" class="seg-input sr-only" checked><span class="seg">Custom</span></label>
+                            <label><input type="radio" name="tlSource" id="tlSrcPresets" class="seg-input sr-only"><span class="seg">Breads</span></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="chip chip-lg"><svg class="ic"><use id="tlRecipeIcon" href="#i-loaf"/></svg></span>
+                        <div class="flex-1 min-w-0">
+                            <h2 id="tlRecipeName" class="text-lg font-bold leading-tight"></h2>
+                            <p id="tlRecipeFacts" class="text-sm text-stone-500 dark:text-stone-400"></p>
+                        </div>
+                    </div>
+                    <p id="tlRecipeGrams" class="mt-3 text-xs font-medium text-stone-600 dark:text-stone-300 bg-stone-50 dark:bg-stone-900/50 p-2.5 rounded-xl"></p>
+                    <button id="tlEditRecipe" onclick="editRecipe()" class="mt-2 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline">Edit recipe →</button>
+                </div>
+
+                <!-- Plan settings (hidden while a bake is running) -->
+                <div id="tlPlan" class="bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300 space-y-4">
+                    <div class="flex bg-stone-100 dark:bg-stone-900 rounded-xl p-1 text-sm">
+                        <label class="flex-1"><input type="radio" name="tlMode" id="tlModeReady" class="seg-input sr-only" checked><span class="seg">Ready by</span></label>
+                        <label class="flex-1"><input type="radio" name="tlMode" id="tlModeNow" class="seg-input sr-only"><span class="seg">Start now</span></label>
+                    </div>
+                    <div id="tlReadyWrap">
+                        <label class="flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-target"/></svg>Ready at</label>
+                        <input type="datetime-local" id="tlReady" class="w-full p-3 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-xl focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-thermo"/></svg>Kitchen °C</label>
+                            <input type="number" id="tlTemp" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-moon"/></svg>Sleep from</label>
+                            <input type="time" id="tlSleepFrom" value="23:00" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-1.5 text-xs font-medium text-stone-500 dark:text-stone-400 mb-1"><svg class="ic"><use href="#i-moon"/></svg>Until</label>
+                            <input type="time" id="tlSleepTo" value="07:00" class="w-full p-2 bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl cursor-pointer">
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-fridge"/></svg></span>Cold proof in fridge</span>
+                            <input type="checkbox" id="tlCold" class="toggle" checked>
+                        </label>
+                        <label class="flex items-center justify-between bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl cursor-pointer">
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-bulk"/></svg></span>Stretch &amp; folds</span>
+                            <input type="checkbox" id="tlFolds" class="toggle" checked>
+                        </label>
+                        <label class="flex items-center justify-between bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl cursor-pointer">
+                            <span class="font-medium flex items-center gap-3"><span class="chip"><svg class="ic"><use href="#i-drop"/></svg></span>Autolyse</span>
+                            <input type="checkbox" id="tlAutolyse" class="toggle">
+                        </label>
+                    </div>
+                    <details class="border-t border-stone-100 dark:border-stone-700 pt-3">
+                        <summary class="cursor-pointer text-sm font-bold text-stone-600 dark:text-stone-300">Customize step times</summary>
+                        <p class="text-xs text-stone-400 dark:text-stone-500 mt-2 mb-3">Empty fields use the automatic time shown in grey. Your times are saved separately for each bread.</p>
+                        <div id="tlStepTimes" class="space-y-2"></div>
+                        <button onclick="resetDurations()" class="mt-3 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline">Reset to automatic</button>
+                    </details>
+                </div>
+
+                <!-- The timeline itself -->
+                <div class="bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors duration-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold flex items-center gap-2"><span class="chip chip-lg"><svg class="ic"><use href="#i-timer"/></svg></span>Timeline</h2>
+                        <span id="tlReadyBadge" class="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md"></span>
+                    </div>
+                    <div id="tlNotes" class="space-y-2 mb-4"></div>
+                    <ol id="tlList"></ol>
+                    <div id="tlActions" class="mt-2 space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="max-w-md mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-3">
             <button onclick="toggleVersionModal()" class="text-xs font-bold bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-3 py-1 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition">
-                v1.7.0
+                v2.3.0
             </button>
             <a href="https://github.com/shaygur98/Sourdough-Calculator" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition" aria-label="GitHub Repository">
                 <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -259,22 +641,41 @@
         
     </main>
 
+    <!-- Gentle in-app reminder -->
+    <div id="toast" class="hidden-row fixed left-4 right-4 bottom-24 z-40">
+        <div class="max-w-md mx-auto flex gap-3 items-start bg-white dark:bg-stone-800 border border-amber-200 dark:border-amber-900 shadow-lg rounded-2xl p-4">
+            <span class="chip"><svg class="ic"><use href="#i-bell"/></svg></span>
+            <div class="flex-1 min-w-0">
+                <p id="toastTitle" class="font-semibold"></p>
+                <p id="toastBody" class="text-sm text-stone-500 dark:text-stone-400"></p>
+            </div>
+            <button onclick="hideToast()" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200" aria-label="Dismiss">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
     <nav class="bg-white dark:bg-stone-900 pb-safe pt-2 px-2 shadow-[0_-1px_10px_rgba(0,0,0,0.05)] dark:shadow-none dark:border-t dark:border-stone-800 fixed bottom-0 w-full z-20 transition-colors duration-300">
         <div class="flex justify-around max-w-md mx-auto mb-2">
-            <button onclick="switchTab('recipe')" id="nav-recipe" class="nav-item active flex flex-col items-center gap-1 p-2 w-[30%]">
+            <button onclick="switchTab('recipe')" id="nav-recipe" class="nav-item active flex flex-col items-center gap-1 p-2 w-[24%]">
                 <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-scale"/></svg>
                 <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Custom</span>
             </button>
-            <button onclick="switchTab('presets')" id="nav-presets" class="nav-item flex flex-col items-center gap-1 p-2 w-[30%]">
+            <button onclick="switchTab('presets')" id="nav-presets" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
                 <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-loaf"/></svg>
                 <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Breads</span>
             </button>
-            <button onclick="switchTab('starter')" id="nav-starter" class="nav-item flex flex-col items-center gap-1 p-2 w-[30%]">
+            <button onclick="switchTab('starter')" id="nav-starter" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
                 <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon w-6 h-6 z-10 text-stone-500 dark:text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-jar"/></svg>
                 <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Starter</span>
+            </button>
+            <button onclick="switchTab('timeline')" id="nav-timeline" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
+                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
+                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-timer"/></svg>
+                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Timeline</span>
             </button>
         </div>
     </nav>
@@ -302,24 +703,34 @@
             }
         }
 
-        // Theme management
-        function initTheme() {
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon-dark').classList.add('hidden');
-                document.getElementById('theme-icon-dark').classList.remove('block');
-                document.getElementById('theme-icon-light').classList.remove('hidden');
-                document.getElementById('theme-icon-light').classList.add('block');
-            }
+        // Local storage helpers (storage can be blocked, e.g. in private mode)
+        const STORAGE_KEY = 'sourdough-calc';
+        function loadSaved() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { return {}; }
+        }
+        function save(patch) {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.assign(loadSaved(), patch))); } catch (e) {}
         }
 
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
+        // Theme management
+        function setTheme(isDark) {
+            document.documentElement.classList.toggle('dark', isDark);
             document.getElementById('theme-icon-light').classList.toggle('hidden', !isDark);
             document.getElementById('theme-icon-light').classList.toggle('block', isDark);
             document.getElementById('theme-icon-dark').classList.toggle('hidden', isDark);
             document.getElementById('theme-icon-dark').classList.toggle('block', !isDark);
+        }
+
+        function initTheme() {
+            const saved = loadSaved().theme;
+            if (saved) setTheme(saved === 'dark');
+            else setTheme(!!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+        }
+
+        function toggleTheme() {
+            const isDark = !document.documentElement.classList.contains('dark');
+            setTheme(isDark);
+            save({ theme: isDark ? 'dark' : 'light' });
         }
 
         // Configuration presets
@@ -335,13 +746,21 @@
         function switchTab(tabId) {
             document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            setTimeout(() => { document.getElementById('page-' + tabId).classList.add('active'); }, 10);
+            document.getElementById('page-' + tabId).classList.add('active');
             document.getElementById('nav-' + tabId).classList.add('active');
+            if (tabId === 'timeline') { lastListSig = ''; renderTimeline(); }
+        }
+
+        const presetIcons = { neapolitan: 'pizza', nypizza: 'pizza', focaccia: 'focaccia', baguette: 'baguette', ciabatta: 'ciabatta' };
+        function updatePresetIcon() {
+            const key = document.getElementById('presetType').value;
+            document.getElementById('presetIcon').setAttribute('href', '#i-' + (presetIcons[key] || 'loaf'));
         }
 
         // Apply selected preset
         function loadPreset() {
             const key = document.getElementById('presetType').value;
+            updatePresetIcon();
             const data = presets[key];
             document.getElementById('pQty').value = data.count;
             document.getElementById('pWeight').value = data.weight;
@@ -353,67 +772,79 @@
             calcPreset();
         }
 
-        // Update preset dough calculations
-        function calcPreset() {
-            const qty = parseFloat(document.getElementById('pQty').value) || 0;
-            const weight = parseFloat(document.getElementById('pWeight').value) || 0;
-            const hyd = parseFloat(document.getElementById('pHyd').value) || 0;
-            const starterPct = parseFloat(document.getElementById('pStarter').value) || 0;
-            const saltPct = parseFloat(document.getElementById('pSalt').value) || 0;
-            const oilPct = parseFloat(document.getElementById('pOil').value) || 0;
-            const sugarPct = parseFloat(document.getElementById('pSugar').value) || 0;
+        const num = id => parseFloat(document.getElementById(id).value) || 0;
 
-            const totalDough = qty * weight;
-            document.getElementById('pTotalOut').innerText = Math.round(totalDough);
-
-            const totalPercentage = 1 + (hyd / 100) + (saltPct / 100) + (oilPct / 100) + (sugarPct / 100);
+        // Shared dough math: baker's percentages relative to total flour, 100% hydration starter
+        function calcDough(totalDough, hyd, starterPct, saltPct, oilPct, sugarPct) {
+            const totalPercentage = 1 + (hyd + saltPct + oilPct + sugarPct) / 100;
             const totalFlour = totalDough / totalPercentage;
-
             const totalWater = totalFlour * (hyd / 100);
-            const salt = totalFlour * (saltPct / 100);
-            const oil = totalFlour * (oilPct / 100);
-            const sugar = totalFlour * (sugarPct / 100);
             const starter = totalFlour * (starterPct / 100);
 
-            const starterFlour = starter / 2;
-            const starterWater = starter / 2;
-            const mainFlour = totalFlour - starterFlour;
-            const mainWater = totalWater - starterWater;
+            const mainFlour = totalFlour - starter / 2;
+            const mainWater = totalWater - starter / 2;
 
-            document.getElementById('pOutFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
-            document.getElementById('pOutWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
-            document.getElementById('pOutStarter').innerText = Math.max(0, Math.round(starter)) + "g";
-            document.getElementById('pOutSalt').innerText = Math.max(0, salt).toFixed(1) + "g";
-            document.getElementById('pOutOil').innerText = Math.max(0, oil).toFixed(1) + "g";
-            document.getElementById('pOutSugar').innerText = Math.max(0, sugar).toFixed(1) + "g";
+            let warning = '';
+            if (mainFlour < 0) {
+                warning = 'Starter % is too high: the starter alone has more flour than the whole recipe. Lower starter below 200%.';
+            } else if (mainWater < 0) {
+                warning = `The starter holds more water than ${hyd}% hydration allows. Raise hydration to at least ${starterPct / 2}% or lower the starter %.`;
+            }
 
-            document.getElementById('rowOil').classList.toggle('hidden-row', oil <= 0);
-            document.getElementById('rowSugar').classList.toggle('hidden-row', sugar <= 0);
+            return {
+                flour: mainFlour, water: mainWater, starter: starter,
+                salt: totalFlour * (saltPct / 100),
+                oil: totalFlour * (oilPct / 100),
+                sugar: totalFlour * (sugarPct / 100),
+                warning: warning
+            };
+        }
+
+        // Set an output's text; it gives a little bounce when the value changes
+        function setOut(id, text) {
+            const el = document.getElementById(id);
+            if (el.innerText === text) return;
+            el.innerText = text;
+            el.classList.remove('bump');
+            void el.offsetWidth;
+            el.classList.add('bump');
+        }
+
+        // Write results into an output panel; ids are the output ids for each ingredient
+        function renderDough(d, ids) {
+            setOut(ids.flour, Math.max(0, Math.round(d.flour)) + "g");
+            setOut(ids.water, Math.max(0, Math.round(d.water)) + "g");
+            setOut(ids.starter, Math.max(0, Math.round(d.starter)) + "g");
+            setOut(ids.salt, Math.max(0, d.salt).toFixed(1) + "g");
+            setOut(ids.oil, Math.max(0, d.oil).toFixed(1) + "g");
+            setOut(ids.sugar, Math.max(0, d.sugar).toFixed(1) + "g");
+            document.getElementById(ids.rowOil).classList.toggle('hidden-row', d.oil <= 0);
+            document.getElementById(ids.rowSugar).classList.toggle('hidden-row', d.sugar <= 0);
+
+            const warn = document.getElementById(ids.warn);
+            warn.querySelector('span').innerText = d.warning;
+            warn.classList.toggle('hidden-row', !d.warning);
+        }
+
+        // Update preset dough calculations
+        function calcPreset() {
+            const totalDough = num('pQty') * num('pWeight');
+            setOut('pTotalOut', String(Math.round(totalDough)));
+
+            const d = calcDough(totalDough, num('pHyd'), num('pStarter'), num('pSalt'), num('pOil'), num('pSugar'));
+            renderDough(d, {
+                flour: 'pOutFlour', water: 'pOutWater', starter: 'pOutStarter', salt: 'pOutSalt',
+                oil: 'pOutOil', sugar: 'pOutSugar', rowOil: 'rowOil', rowSugar: 'rowSugar', warn: 'pWarn'
+            });
         }
 
         // Update custom dough calculations
         function calcRecipe() {
-            const totalDough = parseFloat(document.getElementById('totalDough').value) || 0;
-            const hydration = parseFloat(document.getElementById('hydration').value) || 0;
-            const starterPct = parseFloat(document.getElementById('starterPct').value) || 0;
-            const saltPct = parseFloat(document.getElementById('saltPct').value) || 0;
-
-            const totalPercentage = 1 + (hydration / 100) + (saltPct / 100);
-            const totalFlour = totalDough / totalPercentage;
-
-            const totalWater = totalFlour * (hydration / 100);
-            const salt = totalFlour * (saltPct / 100);
-            const starter = totalFlour * (starterPct / 100);
-
-            const starterFlour = starter / 2;
-            const starterWater = starter / 2;
-            const mainFlour = totalFlour - starterFlour;
-            const mainWater = totalWater - starterWater;
-
-            document.getElementById('outFlour').innerText = Math.max(0, Math.round(mainFlour)) + "g";
-            document.getElementById('outWater').innerText = Math.max(0, Math.round(mainWater)) + "g";
-            document.getElementById('outStarter').innerText = Math.max(0, Math.round(starter)) + "g";
-            document.getElementById('outSalt').innerText = Math.max(0, salt).toFixed(1) + "g";
+            const d = calcDough(num('totalDough'), num('hydration'), num('starterPct'), num('saltPct'), num('oilPct'), num('sugarPct'));
+            renderDough(d, {
+                flour: 'outFlour', water: 'outWater', starter: 'outStarter', salt: 'outSalt',
+                oil: 'outOil', sugar: 'outSugar', rowOil: 'outRowOil', rowSugar: 'outRowSugar', warn: 'warn'
+            });
         }
 
         // Update feeding requirements
@@ -436,15 +867,557 @@
             const seed = target / parts;
             const flourWater = seed * ratio;
 
-            document.getElementById('feedSeed').innerText = Math.round(seed) + "g";
-            document.getElementById('feedFlour').innerText = Math.round(flourWater) + "g";
-            document.getElementById('feedWater').innerText = Math.round(flourWater) + "g";
+            setOut('feedSeed', Math.round(seed) + "g");
+            setOut('feedFlour', Math.round(flourWater) + "g");
+            setOut('feedWater', Math.round(flourWater) + "g");
         }
 
+        // ---------- Bake timeline ----------
+        const STYLES = {
+            custom: { name: 'Custom Loaf', icon: 'loaf', kind: 'loaf', bake: 45 },
+            neapolitan: { name: 'Neapolitan Pizza', icon: 'pizza', kind: 'pizza', bake: 10 },
+            nypizza: { name: 'NY Style Pizza', icon: 'pizza', kind: 'pizza', bake: 15 },
+            focaccia: { name: 'Focaccia', icon: 'focaccia', kind: 'focaccia', bake: 25 },
+            baguette: { name: 'Baguette', icon: 'baguette', kind: 'baguette', bake: 25 },
+            ciabatta: { name: 'Ciabatta', icon: 'ciabatta', kind: 'ciabatta', bake: 30 }
+        };
+        const ROOM_PROOF = { loaf: 120, pizza: 240, focaccia: 120, baguette: 60, ciabatta: 60 };
+        const HOUR_STEPS = ['feed', 'bulk', 'cold', 'proof'];
+        const MIN = 60000;
+        let bake = loadSaved().bake || null;
+        let lastListSig = '', justDone = -1;
+
+        const pad = n => String(n).padStart(2, '0');
+        const toLocalInput = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+        const round15 = m => Math.max(15, Math.round(m / 15) * 15);
+        const fmtTime = t => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const toMinutes = v => { const p = (v || '0:0').split(':').map(Number); return p[0] * 60 + p[1]; };
+        const checked = id => document.getElementById(id).checked;
+
+        function fmtDur(m) {
+            m = Math.round(m);
+            if (m < 60) return m + ' min';
+            const h = Math.floor(m / 60), r = m % 60;
+            return r ? `${h}h ${r}m` : `${h}h`;
+        }
+
+        function fmtDay(t) {
+            const d = new Date(t), today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diff = Math.round((new Date(t).setHours(0, 0, 0, 0) - today) / 864e5);
+            const label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+            return diff === 0 ? 'Today · ' + label : diff === 1 ? 'Tomorrow · ' + label : label;
+        }
+
+        // The recipe the timeline is for, read from the Custom or Breads tab
+        function getRecipe() {
+            const fromPresets = checked('tlSrcPresets');
+            const style = fromPresets ? document.getElementById('presetType').value : 'custom';
+            let total, hyd, starter, salt, oil, sugar, size;
+            if (fromPresets) {
+                total = num('pQty') * num('pWeight'); size = `${num('pQty')} × ${num('pWeight')}g`;
+                hyd = num('pHyd'); starter = num('pStarter'); salt = num('pSalt'); oil = num('pOil'); sugar = num('pSugar');
+            } else {
+                total = num('totalDough'); size = `${total}g dough`;
+                hyd = num('hydration'); starter = num('starterPct'); salt = num('saltPct'); oil = num('oilPct'); sugar = num('sugarPct');
+            }
+            const d = calcDough(total, hyd, starter, salt, oil, sugar);
+            const facts = [size, `${hyd}% hydration`, `${starter}% starter`, `${salt}% salt`];
+            const grams = [`Flour ${Math.max(0, Math.round(d.flour))}g`, `Water ${Math.max(0, Math.round(d.water))}g`, `Starter ${Math.round(d.starter)}g`, `Salt ${d.salt.toFixed(1)}g`];
+            if (oil > 0) { facts.push(`${oil}% oil`); grams.push(`Oil ${d.oil.toFixed(1)}g`); }
+            if (sugar > 0) { facts.push(`${sugar}% sugar`); grams.push(`Sugar ${d.sugar.toFixed(1)}g`); }
+            return { style, name: STYLES[style].name, icon: STYLES[style].icon, facts: facts.join(' · '), grams: grams.join(' · '), starterPct: starter };
+        }
+
+        const getDurations = style => (loadSaved().durations || {})[style] || {};
+
+        function planOptions(recipe) {
+            const temp = num('tlTemp') || 22, ratio = num('ratio') || 1;
+            return {
+                dur: getDurations(recipe.style),
+                // Same peak-time model as the Starter tab
+                peak: round15(5 * Math.sqrt(ratio) * Math.pow(0.9, temp - 22) * 60),
+                // ~5h at 24°C with 20% starter; warmer or more starter is faster
+                bulk: Math.min(720, Math.max(120, round15(300 * Math.pow(0.9, temp - 24) * Math.pow(20 / Math.max(recipe.starterPct, 5), 0.4)))),
+                cold: checked('tlCold'), folds: checked('tlFolds'), autolyse: checked('tlAutolyse')
+            };
+        }
+
+        // Steps for a bread style. Overlap steps run alongside the end of the step before the next main step.
+        function buildSteps(style, o) {
+            const kind = STYLES[style].kind, pizza = kind === 'pizza';
+            const step = (key, auto, title, icon, remind, note, extra) =>
+                Object.assign({ key, auto, mins: o.dur[key] > 0 ? o.dur[key] : auto, title, icon, remind, note }, extra);
+
+            const steps = [step('feed', o.peak, 'Feed starter', 'jar', 'Time to feed your starter', 'Let it rise until bubbly and roughly doubled.')];
+            if (o.autolyse) steps.push(step('autolyse', 45, 'Autolyse', 'drop', 'Time to autolyse', 'Mix just the flour and water while the starter finishes rising.', { overlap: true }));
+            steps.push(step('mix', 15, 'Mix the dough', 'mix', 'Your starter should be ready, time to mix', 'Add the starter and salt and mix until combined.'));
+            steps.push(step('bulk', o.bulk, 'Bulk fermentation', 'bulk', 'Cover the dough and let it rise', 'Until airy, jiggly and grown by about half.',
+                o.folds ? { foldCfg: { count: o.dur.foldCount > 0 ? o.dur.foldCount : 4, every: o.dur.foldEvery > 0 ? o.dur.foldEvery : 30 } } : {}));
+
+            if (pizza) {
+                steps.push(step('divide', 20, 'Divide & ball', 'balls', 'Time to divide and ball the dough', 'Shape tight balls and put them in a sealed container.'));
+            } else if (kind === 'focaccia') {
+                steps.push(step('divide', 10, 'Move to oiled pan', 'focaccia', 'Time to move the dough to the pan', 'Plenty of oil in the pan, then gently stretch the dough out.'));
+            } else {
+                steps.push(step('preshape', 30, 'Pre-shape & rest', 'balls', 'Time to pre-shape', 'Loosely round the dough and let it rest uncovered.'));
+                steps.push(step('shape', 10, kind === 'ciabatta' ? 'Divide & shape gently' : 'Shape', STYLES[style].icon, 'Time to shape', 'Build surface tension, then into the banneton or couche.'));
+            }
+
+            if (o.cold) {
+                steps.push(step('cold', pizza ? 24 * 60 : 12 * 60, pizza ? 'Cold ferment in fridge' : 'Cold proof in fridge', 'fridge', 'Into the fridge it goes',
+                    'Covered, in the fridge. Nothing to do here.', { flex: pizza ? [24 * 60, 72 * 60] : [8 * 60, 16 * 60] }));
+                if (pizza || kind === 'focaccia') steps.push(step('warm', pizza ? 120 : 90, 'Bring to room temp', 'thermo', 'Take the dough out of the fridge', 'Let it warm up and relax before baking.'));
+            } else {
+                steps.push(step('proof', ROOM_PROOF[kind], 'Final proof', 'timer', 'Final proof time', 'Until puffy, and a floured finger poke springs back slowly.'));
+            }
+
+            if (kind === 'focaccia') steps.push(step('dimple', 10, 'Dimple, oil & top', 'focaccia', 'Time to dimple and top your focaccia', 'Oiled fingers, deep dimples, then your toppings.'));
+            steps.push(step('preheat', pizza ? 60 : 45, 'Preheat oven', 'flame', 'Time to preheat the oven',
+                pizza ? 'As hot as it goes, with the stone or steel inside.' : 'With your Dutch oven or stone inside.', { overlap: true }));
+            steps.push(step('bake', STYLES[style].bake, 'Bake', 'oven', 'Time to bake', pizza ? 'One at a time, until the crust is blistered.' : 'Until deep golden brown.'));
+            if (!pizza) steps.push(step('cool', kind === 'focaccia' ? 15 : 60, 'Cool', 'cool', 'Out of the oven! Let it cool', 'The hard part: wait before slicing.'));
+            return steps;
+        }
+
+        function layoutChain(chain, start) {
+            let t = start;
+            chain.forEach(s => { s.start = t; t += s.mins * MIN; s.end = t; });
+        }
+
+        // Place overlap steps (they end when the next main step starts) and fold reminders
+        function placeExtras(steps) {
+            steps.forEach((s, i) => {
+                if (s.overlap && !s.done) {
+                    const next = steps.slice(i + 1).find(n => !n.overlap);
+                    s.end = next.start; s.start = s.end - s.mins * MIN;
+                }
+                if (s.foldCfg) s.folds = Array.from({ length: s.foldCfg.count }, (_, k) => s.start + (k + 1) * s.foldCfg.every * MIN).filter(t => t < s.end);
+            });
+        }
+
+        function layout(steps, anchor, backward) {
+            const chain = steps.filter(s => !s.overlap);
+            const total = chain.reduce((a, s) => a + s.mins, 0) * MIN;
+            layoutChain(chain, backward ? anchor - total : anchor);
+            placeExtras(steps);
+        }
+
+        // Every moment you need to do something: step starts plus each stretch & fold
+        function actionsOf(steps) {
+            const list = [];
+            steps.forEach(s => {
+                if (s.done) return;
+                list.push({ id: 'step:' + s.key, t: s.start, label: s.title, title: s.remind, body: s.note });
+                (s.folds || []).forEach((f, k) => {
+                    const label = `Stretch & fold (${k + 1} of ${s.folds.length})`;
+                    list.push({ id: `fold:${k}`, t: f, label, title: label, body: 'A quick set whenever you get a moment.' });
+                });
+            });
+            return list.sort((a, b) => a.t - b.t);
+        }
+
+        function inSleep(t) {
+            const from = toMinutes(document.getElementById('tlSleepFrom').value), to = toMinutes(document.getElementById('tlSleepTo').value);
+            const d = new Date(t), m = d.getHours() * 60 + d.getMinutes();
+            if (from === to) return false;
+            return from < to ? (m >= from && m < to) : (m >= from || m < to);
+        }
+
+        function readyTime() {
+            const el = document.getElementById('tlReady');
+            let t = new Date(el.value).getTime();
+            if (!el.value || isNaN(t)) {
+                const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(10, 0, 0, 0);
+                t = d.getTime(); el.value = toLocalInput(t);
+                el.dataset.auto = '1';
+            }
+            return t;
+        }
+
+        // Build the plan; the fridge proof stretches or shrinks (within a safe range) to keep steps out of sleep hours
+        function makePlan(recipe) {
+            const steps = buildSteps(recipe.style, planOptions(recipe));
+            const backward = checked('tlModeReady');
+            const anchor = backward ? readyTime() : Math.ceil(Date.now() / (5 * MIN)) * 5 * MIN;
+            const flex = steps.find(s => s.flex);
+            if (flex) {
+                flex.base = flex.mins;
+                const deltas = [0];
+                for (let k = 15; flex.base - k >= flex.flex[0] || flex.base + k <= flex.flex[1]; k += 15) deltas.push(k, -k);
+                let best = null;
+                for (const delta of deltas) {
+                    const m = flex.base + delta;
+                    if (m < flex.flex[0] || m > flex.flex[1]) continue;
+                    flex.mins = m;
+                    layout(steps, anchor, backward);
+                    const clashes = actionsOf(steps).filter(a => inSleep(a.t)).length;
+                    if (!best || clashes < best.clashes) best = { m, clashes };
+                    if (clashes === 0) break;
+                }
+                flex.mins = best.m;
+            }
+            layout(steps, anchor, backward);
+            return { steps, backward };
+        }
+
+        function renderStepTimes(style, steps) {
+            const box = document.getElementById('tlStepTimes');
+            const dur = getDurations(style);
+            const rows = steps.map(s => ({ key: s.key, label: s.title, auto: s.auto, hours: HOUR_STEPS.includes(s.key) }));
+            if (steps.some(s => s.foldCfg)) {
+                rows.splice(rows.findIndex(r => r.key === 'bulk') + 1, 0,
+                    { key: 'foldCount', label: 'Stretch & fold sets', auto: 4, unit: 'sets' },
+                    { key: 'foldEvery', label: 'Time between folds', auto: 30 });
+            }
+            // Only rebuild when the set of steps changes, so typing doesn't lose focus
+            const sig = style + ':' + rows.map(r => r.key).join(',');
+            if (box.dataset.sig !== sig) {
+                box.dataset.sig = sig;
+                box.innerHTML = rows.map(r => `
+                    <label class="flex items-center justify-between gap-3 text-sm">
+                        <span class="text-stone-600 dark:text-stone-300">${r.label}</span>
+                        <span class="flex items-center gap-1.5">
+                            <input type="number" min="0" step="${r.hours ? 0.25 : 1}" data-key="${r.key}" data-hours="${r.hours ? 1 : ''}" oninput="setDuration(this)"
+                                class="w-20 p-2 text-right bg-stone-50 dark:bg-stone-900 dark:text-stone-100 border-none rounded-lg text-sm focus:ring-2 focus:ring-amber-500">
+                            <span class="w-7 text-xs text-stone-400">${r.unit || (r.hours ? 'h' : 'min')}</span>
+                        </span>
+                    </label>`).join('');
+            }
+            rows.forEach(r => {
+                const el = box.querySelector(`[data-key="${r.key}"]`);
+                const toUnit = m => r.hours ? +(m / 60).toFixed(2) : m;
+                el.placeholder = toUnit(r.auto);
+                if (document.activeElement !== el) el.value = dur[r.key] > 0 ? toUnit(dur[r.key]) : '';
+            });
+        }
+
+        function setDuration(el) {
+            const style = getRecipe().style, all = loadSaved().durations || {}, dur = all[style] || {};
+            const v = parseFloat(el.value);
+            if (v > 0) dur[el.dataset.key] = Math.round(el.dataset.hours ? v * 60 : v);
+            else delete dur[el.dataset.key];
+            all[style] = dur;
+            save({ durations: all });
+            renderTimeline();
+        }
+
+        function resetDurations() {
+            const all = loadSaved().durations || {};
+            delete all[getRecipe().style];
+            save({ durations: all });
+            document.getElementById('tlStepTimes').dataset.sig = '';
+            renderTimeline();
+        }
+
+        function editRecipe() {
+            switchTab(checked('tlSrcPresets') ? 'presets' : 'recipe');
+        }
+
+        // Animated icons for the step you're on: each cycles through three stages, like a loader
+        const fr = (k, inner) => `<g class="fr f${k}">${inner}</g>`;
+        const DUO = 'fill="currentColor" fill-opacity=".18"';
+        const DOT = 'fill="currentColor" stroke="none"';
+        const BOWL = `<path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z" ${DUO}/>`;
+        const sparkle = (x, y) => `<path d="M${x} ${y - 1.3}v2.6M${x - 1.3} ${y}h2.6"/>`;
+        const wisp = x => `<path d="M${x} 13c-1-1.3-1-2.7 0-4s1-2.7 0-4"/>`;
+        const LOAF = 'M3.5 14.5c0-4.7 3.8-8.5 8.5-8.5s8.5 3.8 8.5 8.5v3a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z';
+        const BAGUETTE = 'M4.2 19.8c-1.3-1.3-.6-4 1.6-6.2l8-8c2.2-2.2 4.9-2.9 6.2-1.6s.6 4-1.6 6.2l-8 8c-2.2 2.2-4.9 2.9-6.2 1.6z';
+        const BAGUETTE_SCORES = ['M6.9 15.6l2.7-1.8', 'M10.3 12.2l2.7-1.8', 'M13.7 8.8l2.7-1.8'];
+        const FOCACCIA_DIMPLES = [[7, 10], [12.4, 13.6], [10.8, 9.4], [8.4, 14], [17, 14.6]];
+        const CIABATTA_DOTS = [[7, 15], [16.5, 13], [12, 15.4], [15.5, 15.8]];
+        const STAGES = {
+            jar: `<rect x="7" y="2.8" width="10" height="3.2" rx="1"/>` +
+                [17, 14, 11].map((y, k) => fr(k, `<path d="M5.5 ${y}c1.4-.8 2.9-.8 4.3 0s3 .8 4.4 0s3-.8 4.3 0V19a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2z" ${DUO}/><circle cx="9.5" cy="${y + 2.4}" r=".8"/>${k ? `<circle cx="14" cy="${y + 1.8}" r=".6"/>` : ''}`)).join('') +
+                `<path d="M7.8 6v1.3C6.3 8.1 5.5 9.3 5.5 11v8a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-8c0-1.7-.8-2.9-2.3-3.7V6"/>`,
+            mix: [-28, 0, 28].map((a, k) => fr(k, `<g transform="rotate(${a} 14 11.5)"><path d="M12.5 11.5L17 3.5"/><path d="M15.3 11.5l3.9-6.2"/></g>`)).join('') + BOWL,
+            bulk: ['M8.5 11.5c0-2 1.6-3.3 3.5-3.3s3.5 1.3 3.5 3.3', 'M7 11.5c0-3 2.2-5 5-5s5 2 5 5', 'M5.5 11.5c0-4 2.9-6.8 6.5-6.8s6.5 2.8 6.5 6.8']
+                .map((d, k) => fr(k, `<path d="${d}" ${DUO}/>${k === 2 ? `<circle cx="10" cy="8.5" r=".7" ${DOT}/><circle cx="13.8" cy="7.5" r=".6" ${DOT}/>` : ''}`)).join('') + BOWL,
+            balls: fr(0, `<circle cx="12" cy="13" r="6" ${DUO}/>`) +
+                fr(1, `<circle cx="7.8" cy="14" r="4.2" ${DUO}/><circle cx="16.2" cy="14" r="4.2" ${DUO}/>`) +
+                fr(2, `<circle cx="12" cy="8.3" r="4" ${DUO}/><circle cx="7.6" cy="15.7" r="4" ${DUO}/><circle cx="16.4" cy="15.7" r="4" ${DUO}/>`),
+            loaf: fr(0, `<circle cx="12" cy="13.5" r="6" ${DUO}/>`) +
+                fr(1, `<path d="${LOAF}" ${DUO}/>`) +
+                fr(2, `<path d="${LOAF}" ${DUO}/><path d="M8 10.5l1.6 2.6"/><path d="M11.3 9.5l1.6 2.6"/><path d="M14.6 10.5l1.6 2.6"/>`),
+            baguette: `<path d="${BAGUETTE}" ${DUO}/>` + [1, 2, 3].map((n, k) => fr(k, BAGUETTE_SCORES.slice(0, n).map(d => `<path d="${d}"/>`).join(''))).join(''),
+            focaccia: `<rect x="3" y="6" width="18" height="12" rx="3" ${DUO}/>` +
+                [2, 3, 5].map((n, k) => fr(k, FOCACCIA_DIMPLES.slice(0, n).map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".9" ${DOT}/>`).join(''))).join(''),
+            ciabatta: `<path d="M3 15.5c0-3 2.5-5 5-5.5c2-.4 3-1.5 5-1.5c4 0 8 2.5 8 6c0 2.5-2 3.5-4 3.5H6.5C4.5 18 3 17.5 3 15.5z" ${DUO}/><path d="M8.5 12.8c1.6.6 3.3.4 5-.6"/>` +
+                [2, 3, 4].map((n, k) => fr(k, CIABATTA_DOTS.slice(0, n).map(([x, y]) => `<circle cx="${x}" cy="${y}" r=".6" ${DOT}/>`).join(''))).join(''),
+            fridge: `<rect x="6" y="2.5" width="12" height="19" rx="2.5" ${DUO}/><path d="M6 9.5h12"/><path d="M9 5.3v1.6"/><path d="M9 12.5v3"/>` +
+                [[[14, 14]], [[14, 14], [12.5, 18.3]], [[14, 14], [12.5, 18.3], [15.3, 17.5]]].map((pts, k) => fr(k, pts.map(([x, y]) => sparkle(x, y)).join(''))).join(''),
+            thermo: `<path d="M10 13.6V5a2 2 0 0 1 4 0v8.6a4 4 0 1 1-4 0z" ${DUO}/><circle cx="12" cy="17" r="1.6" ${DOT}/><path d="M16.5 6h1.5"/><path d="M16.5 9h1.5"/>` +
+                [14, 11, 7.5].map((y, k) => fr(k, `<path d="M12 16.5V${y}"/>`)).join(''),
+            flame: [0.62, 0.8, 1].map((s, k) => fr(k, `<g transform="translate(12 21.5) scale(${s}) translate(-12 -21.5)"><path d="M12 21.5c3.6 0 6-2.5 6-5.8c0-3.7-3-6-4.2-9.7c-2.2 1.7-3.3 3.7-3.3 6c-1-.6-1.6-1.6-1.8-2.8C7.2 10.6 6 12.8 6 15.7c0 3.3 2.4 5.8 6 5.8z" ${DUO}/><path d="M12 19a2 2 0 0 0 2-2c0-1.3-1-2.1-2-3.5c-1 1.4-2 2.2-2 3.5a2 2 0 0 0 2 2z"/></g>`)).join(''),
+            oven: `<rect x="3" y="3.5" width="18" height="17" rx="2.5" ${DUO}/><rect x="6" y="10" width="12" height="7.5" rx="1.5"/><circle cx="7" cy="6.8" r=".7" ${DOT}/><circle cx="10" cy="6.8" r=".7" ${DOT}/><path d="M14 6.8h4"/>` +
+                ['M8.5 16.5c0-.9 1.6-1.5 3.5-1.5s3.5.6 3.5 1.5z', 'M8.5 16.5c0-1.6 1.6-2.6 3.5-2.6s3.5 1 3.5 2.6z', 'M8.5 16.5c0-2.3 1.6-3.8 3.5-3.8s3.5 1.5 3.5 3.8z']
+                    .map((d, k) => fr(k, `<path d="${d}" fill="currentColor" fill-opacity="${0.25 + k * 0.15}"/>`)).join(''),
+            cool: `<path d="M3.5 16.5h17"/><path d="M6 16.5V20"/><path d="M18 16.5V20"/>` +
+                [[12], [12, 8], [12, 8, 16]].map((xs, k) => fr(k, xs.map(wisp).join(''))).join(''),
+            drop: [2, 4.5, 7].map((y, k) => fr(k, `<path d="M12 ${y}c1.2 1.5 2 2.6 2 3.6a2 2 0 0 1-4 0c0-1 .8-2.1 2-3.6z" ${DUO}/>`)).join('') + BOWL,
+            timer: `<circle cx="12" cy="13.5" r="7.5" ${DUO}/><path d="M10 2.5h4"/><path d="M12 2.5V6"/>` +
+                [0, 120, 240].map((a, k) => fr(k, `<g transform="rotate(${a} 12 13.5)"><path d="M12 13.5V9.5"/></g>`)).join('')
+        };
+
+        function stagedIcon(s, now) {
+            const stages = STAGES[s.key === 'proof' ? 'bulk' : s.icon];
+            if (!stages) return `<svg class="ic"><use href="#i-${s.icon}"/></svg>`;
+            // Offset by the clock so the cycle doesn't restart each time the timeline refreshes
+            return `<svg class="ic stages" viewBox="0 0 24 24" style="--t0:-${now % 2400}ms">${stages}</svg>`;
+        }
+
+        function progressRing(s, now, animateIn) {
+            const p = Math.min(1, Math.max(0, (now - s.start) / (s.end - s.start)));
+            const c = 2 * Math.PI * 20;
+            return `<svg class="progress-ring absolute pointer-events-none ${animateIn ? 'progress-in' : ''}" viewBox="0 0 44 44" style="left:-6px;top:-6px;width:44px;height:44px">
+                <circle cx="22" cy="22" r="20" class="progress-track"/>
+                <circle cx="22" cy="22" r="20" class="progress-bar" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${((1 - p) * c).toFixed(1)}"/>
+            </svg>`;
+        }
+
+        function noteHtml(icon, text, warn) {
+            const tone = warn ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300';
+            return `<div class="flex gap-2 text-sm p-3 rounded-xl ${tone}"><svg class="ic mt-px"><use href="#i-${icon}"/></svg><span>${text}</span></div>`;
+        }
+
+        function reminderStatus() {
+            if (!('Notification' in window)) return "This browser can't show notifications, so reminders will appear inside the app.";
+            if (Notification.permission === 'denied') return 'Notifications are blocked for this app, so reminders will appear inside the app. You can allow them in your browser settings.';
+            const lead = Notification.permission === 'granted' ? 'Gentle reminders are on.' : "You'll be asked to allow gentle reminders.";
+            return lead + " They arrive while the app is open or in the background. If it was fully closed, you'll see where you're up to when you reopen it.";
+        }
+
+        function renderTimeline() {
+            const recipe = bake ? bake.recipe : getRecipe();
+            document.getElementById('tlRecipeIcon').setAttribute('href', '#i-' + recipe.icon);
+            document.getElementById('tlRecipeName').innerText = recipe.name;
+            document.getElementById('tlRecipeFacts').innerText = recipe.facts;
+            document.getElementById('tlRecipeGrams').innerText = recipe.grams;
+            document.getElementById('tlMakingLabel').innerText = bake ? 'Baking now' : "You're making";
+            ['tlSource', 'tlEditRecipe', 'tlPlan'].forEach(id => document.getElementById(id).classList.toggle('hidden-row', !!bake));
+            document.getElementById('tlReadyWrap').classList.toggle('hidden-row', !checked('tlModeReady'));
+
+            const now = Date.now(), notes = [];
+            let steps;
+            if (bake) {
+                steps = bake.steps;
+                const next = actionsOf(steps).find(a => a.t > now);
+                if (steps.every(s => s.done)) notes.push(noteHtml('check', 'All done. Enjoy your bake!'));
+                else if (next) notes.push(noteHtml('bell', `Up next: ${next.label} around ${fmtTime(next.t)}.`));
+            } else {
+                let plan = makePlan(recipe);
+                // A ready time we picked for you moves a day later until there's time to start
+                const readyEl = document.getElementById('tlReady');
+                for (let k = 0; k < 4 && plan.backward && readyEl.dataset.auto && plan.steps[0].start < now; k++) {
+                    readyEl.value = toLocalInput(readyTime() + 864e5);
+                    plan = makePlan(recipe);
+                }
+                steps = plan.steps;
+                if (plan.backward && steps[0].start < now) {
+                    notes.push(noteHtml('warn', `To be ready then, you'd need to start ${fmtDay(steps[0].start)} at ${fmtTime(steps[0].start)}, which has already passed. Pick a later time or switch to Start now.`, true));
+                }
+                const flex = steps.find(s => s.flex);
+                if (flex && flex.mins !== flex.base) notes.push(noteHtml('moon', `Fridge time set to ${fmtDur(flex.mins)} so nothing lands in your sleep hours.`));
+                if (actionsOf(steps).some(a => inSleep(a.t))) notes.push(noteHtml('moon', 'Some steps land in your sleep hours (marked below). Try a different ready time.'));
+                renderStepTimes(recipe.style, steps);
+            }
+            document.getElementById('tlNotes').innerHTML = notes.join('');
+
+            const lastEnd = Math.max(...steps.map(s => s.end));
+            document.getElementById('tlReadyBadge').innerText = 'Ready ' + fmtDay(lastEnd).split(' · ')[0] + ' ' + fmtTime(lastEnd);
+
+            // Steps in time order, grouped by day. They slide in when the set of steps changes, not on every edit.
+            const ordered = steps.map((s, i) => ({ s, i })).sort((a, b) => a.s.start - b.s.start);
+            const listSig = (bake ? 'bake:' : 'plan:') + recipe.style + ':' + steps.map(s => s.key).join(',');
+            const enter = listSig !== lastListSig;
+            lastListSig = listSig;
+            let html = '', day = '', k = 0;
+            const anim = () => enter ? `tl-in" style="--i:${k++}` : '';
+            ordered.forEach(({ s, i }, n) => {
+                const d = fmtDay(s.start);
+                if (d !== day) { day = d; html += `<li class="text-xs uppercase tracking-wider font-bold text-stone-400 dark:text-stone-500 pb-3 ${anim()}">${d}</li>`; }
+                const isNow = bake && !s.done && s.start <= now && now < s.end;
+                const sleepy = !bake && (inSleep(s.start) || (s.folds || []).some(inSleep));
+                const folds = (s.folds || []).map(f => `<span class="text-xs font-semibold px-2 py-0.5 rounded-full ${bake && f < now ? 'bg-stone-100 dark:bg-stone-700 text-stone-400' : 'bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'}">${fmtTime(f)}</span>`).join('');
+                html += `
+                    <li class="relative pl-12 pb-5 transition-opacity duration-500 ${s.done ? 'opacity-50' : ''} ${anim()}">
+                        ${n < ordered.length - 1 ? '<span class="absolute left-4 top-9 bottom-1 w-px bg-stone-200 dark:bg-stone-700"></span>' : ''}
+                        <span class="chip absolute left-0 top-0 ${i === justDone ? 'pop' : ''}">${isNow ? stagedIcon(s, now) : `<svg class="ic"><use href="#i-${s.done ? 'check' : s.icon}"/></svg>`}</span>
+                        ${isNow ? progressRing(s, now, enter) : ''}
+                        <div class="flex justify-between items-baseline gap-2">
+                            <p class="font-semibold ${s.done ? 'line-through' : ''}">${s.title}${isNow ? ' <span class="ml-1 text-[10px] uppercase tracking-wider font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">Now</span>' : ''}</p>
+                            <p class="text-sm font-bold tabular-nums text-amber-700 dark:text-amber-400">${fmtTime(s.start)}</p>
+                        </div>
+                        <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">${fmtDur(s.mins)} · ${s.note}</p>
+                        ${sleepy ? '<p class="text-xs font-semibold text-amber-700 dark:text-amber-400 mt-1 flex items-center gap-1"><svg class="ic"><use href="#i-moon"/></svg>During your sleep hours</p>' : ''}
+                        ${folds ? `<div class="mt-2"><p class="text-xs text-stone-500 dark:text-stone-400 mb-1">Stretch &amp; folds</p><div class="flex flex-wrap gap-1.5">${folds}</div></div>` : ''}
+                        ${bake ? `<button onclick="toggleStep(${i})" class="mt-2 text-xs font-bold px-3 py-1 rounded-full bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-amber-100 dark:hover:bg-amber-900/40">${s.done ? 'Undo' : 'Mark done'}</button>` : ''}
+                    </li>`;
+            });
+            document.getElementById('tlList').innerHTML = html;
+            justDone = -1;
+
+            document.getElementById('tlActions').innerHTML = bake
+                ? `<button onclick="endBake()" class="w-full p-3 rounded-xl bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 font-bold ${endArmed ? 'armed' : ''}">${steps.every(s => s.done) ? 'Finish bake' : endArmed ? 'Tap again to end bake' : 'End bake'}</button>`
+                : `<button onclick="startBake()" class="btn-morph w-full p-3 bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center gap-2"><svg class="ic"><use href="#i-bell"/></svg>Start bake</button>
+                   <p class="text-xs text-stone-400 dark:text-stone-500 text-center px-2">${reminderStatus()}</p>`;
+        }
+
+        const saveBake = () => save({ bake: bake });
+
+        async function startBake() {
+            const recipe = getRecipe(), plan = makePlan(recipe);
+            if ('Notification' in window && Notification.permission === 'default') {
+                try { await Notification.requestPermission(); } catch (e) {}
+            }
+            bake = { recipe, steps: plan.steps, ready: Math.max(...plan.steps.map(s => s.end)), notified: [] };
+            // Don't remind about anything that's already due as you press start
+            actionsOf(bake.steps).forEach(a => { if (a.t <= Date.now() + MIN) bake.notified.push(a.id); });
+            saveBake();
+            renderTimeline();
+        }
+
+        // Ending an unfinished bake takes a second tap (browser confirm dialogs can be silently blocked)
+        let endArmed = null;
+        function endBake() {
+            if (!bake.steps.every(s => s.done) && !endArmed) {
+                endArmed = setTimeout(() => { endArmed = null; renderTimeline(); }, 4000);
+                renderTimeline();
+                return;
+            }
+            clearTimeout(endArmed);
+            endArmed = null;
+            bake = null;
+            saveBake();
+            renderTimeline();
+        }
+
+        // Marking a step done also completes earlier steps and moves later ones to start now.
+        // If a fridge step is still ahead, it absorbs the difference so the ready time stays put.
+        function toggleStep(i) {
+            const s = bake.steps[i];
+            justDone = i;
+            if (s.done) { s.done = false; saveBake(); renderTimeline(); return; }
+            const now = Date.now();
+            bake.steps.forEach((x, j) => {
+                if (j > i || (j < i && x.overlap) || x.done) return;
+                x.done = true;
+                // Finished early: show it where it actually happened
+                x.end = Math.min(x.end, now); x.start = Math.min(x.start, now);
+            });
+            if (!s.overlap) {
+                const rest = bake.steps.filter((x, j) => j > i && !x.overlap && !x.done);
+                const flex = rest.find(x => x.flex);
+                if (flex) {
+                    const others = rest.reduce((a, x) => a + (x === flex ? 0 : x.mins), 0);
+                    flex.mins = Math.min(flex.flex[1], Math.max(flex.flex[0], round15((bake.ready - now) / MIN - others)));
+                }
+                layoutChain(rest, now);
+                placeExtras(bake.steps);
+            }
+            saveBake();
+            renderTimeline();
+        }
+
+        // Reminders: a soft in-app card while you're looking, a system notification otherwise
+        let toastTimer;
+        function showToast(title, body) {
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastBody').innerText = body;
+            document.getElementById('toast').classList.remove('hidden-row');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(hideToast, 20000);
+        }
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            if (toast.classList.contains('hidden-row')) return;
+            toast.classList.add('leaving');
+            setTimeout(() => { toast.classList.add('hidden-row'); toast.classList.remove('leaving'); }, 250);
+        }
+
+        function remind(title, body) {
+            if (document.visibilityState === 'visible') { showToast(title, body); return; }
+            if ('Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) {
+                navigator.serviceWorker.ready
+                    .then(reg => reg.showNotification(title, { body, icon: 'icon-192.png', badge: 'badge-96.png', tag: 'bake-reminder' }))
+                    .catch(() => showToast(title, body));
+            } else {
+                showToast(title, body);
+            }
+        }
+
+        function checkReminders() {
+            if (!bake) return;
+            const now = Date.now();
+            const due = actionsOf(bake.steps).filter(a => a.t <= now && !bake.notified.includes(a.id));
+            if (!due.length) return;
+            due.forEach(a => bake.notified.push(a.id));
+            saveBake();
+            // Only the most recent one, so reopening the app doesn't bring a pile of reminders
+            const latest = due[due.length - 1];
+            remind(latest.title, latest.body);
+        }
+
+        setInterval(() => {
+            checkReminders();
+            if (bake && document.getElementById('page-timeline').classList.contains('active')) renderTimeline();
+        }, 30000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') { checkReminders(); renderTimeline(); }
+        });
+
+        // Remember every input and the selected bread style between visits
+        const isToggle = el => el.type === 'checkbox' || el.type === 'radio';
+
+        function restoreInputs() {
+            const inputs = loadSaved().inputs || {};
+            Object.keys(inputs).forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (isToggle(el)) el.checked = inputs[id]; else el.value = inputs[id];
+            });
+            return Object.keys(inputs).length > 0;
+        }
+
+        function saveInputs() {
+            const inputs = {};
+            document.querySelectorAll('main input, main select').forEach(el => { if (el.id) inputs[el.id] = isToggle(el) ? el.checked : el.value; });
+            save({ inputs: inputs });
+        }
+
+        function onAnyInput(e) {
+            const t = e.target;
+            // Kitchen temp is shared between the Starter and Timeline tabs
+            if (t.id === 'temp') document.getElementById('tlTemp').value = t.value;
+            if (t.id === 'tlTemp') { document.getElementById('temp').value = t.value; calcStarter('temp'); }
+            if (t.id === 'tlReady') delete t.dataset.auto;
+            // The timeline follows whichever recipe tab you edited last
+            const page = t.closest && t.closest('.page');
+            if (page && page.id === 'page-recipe') document.getElementById('tlSrcCustom').checked = true;
+            if (page && page.id === 'page-presets') document.getElementById('tlSrcPresets').checked = true;
+            saveInputs();
+            if (!t.closest || !t.closest('#tlStepTimes')) renderTimeline();
+        }
+
+        document.addEventListener('input', onAnyInput);
+        document.addEventListener('change', onAnyInput);
+
         initTheme();
+        const hadSaved = restoreInputs();
         calcRecipe();
         calcStarter('ratio');
-        loadPreset(); 
+        if (hadSaved) { updatePresetIcon(); calcPreset(); } else loadPreset();
+
+        if (!document.getElementById('tlTemp').value) document.getElementById('tlTemp').value = document.getElementById('temp').value;
+        // A remembered ready time that has passed moves forward to the same time on a future day
+        const savedReady = new Date(document.getElementById('tlReady').value).getTime();
+        if (savedReady && savedReady < Date.now()) {
+            let t = savedReady;
+            while (t < Date.now()) t += 864e5;
+            document.getElementById('tlReady').value = toLocalInput(t);
+        }
+        renderTimeline();
+        checkReminders();
     </script>
 </body>
 </html>
