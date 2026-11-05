@@ -1,6 +1,8 @@
 // Bump this on every release so old caches get cleared
-const CACHE = 'sourdough-v2.3.0';
-const APP_FILES = ['./', './index.html', './manifest.json', './icon.svg', './icon-192.png', './badge-96.png', './apple-touch-icon.png'];
+const CACHE = 'sourdough-v2.3.1';
+const APP_FILES = ['./', './index.html', './manifest.json'];
+// Nice to have offline, but a missing one must not stop the app from installing
+const EXTRA_FILES = ['./icon.svg', './icon-192.png', './badge-96.png', './apple-touch-icon.png'];
 const TAILWIND = 'https://cdn.tailwindcss.com';
 
 // Cache the app shell (and Tailwind) on install so the app works offline
@@ -9,7 +11,8 @@ self.addEventListener('install', function(event) {
         const tailwind = fetch(TAILWIND, { mode: 'no-cors' })
             .then(function(res) { return cache.put(TAILWIND, res); })
             .catch(function() {});
-        return Promise.all([cache.addAll(APP_FILES), tailwind]);
+        const extras = EXTRA_FILES.map(function(f) { return cache.add(f).catch(function() {}); });
+        return Promise.all([cache.addAll(APP_FILES), tailwind].concat(extras));
     }));
     self.skipWaiting();
 });
