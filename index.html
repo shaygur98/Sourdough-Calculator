@@ -40,14 +40,18 @@
         .page.active .border-t.space-y-2 > div:nth-child(7) { animation-delay: 220ms; }
         .page.active .border-t.space-y-2 > div:nth-child(8) { animation-delay: 260ms; }
 
-        /* Navigation: the pill stretches into place and the icon hops */
-        .nav-item { position: relative; }
-        .nav-item .pill { border-radius: 9999px; opacity: 0; transform: scale(0.5, 0.72); transition: transform 0.6s var(--bouncy), opacity 0.2s ease, background-color 0.3s ease; }
-        .nav-item.active .pill { background-color: #fef3c7; opacity: 1; transform: scale(1); }
-        .nav-item .icon { transition: color 0.3s ease; }
-        .nav-item.active .icon { color: #b45309; animation: navHop 0.6s var(--lively); }
-        .dark .nav-item.active .pill { background-color: #451a03; }
-        .dark .nav-item.active .icon { color: #fbbf24; }
+        /* Floating toolbar: a pill that hovers above the page; the active tab grows into a labelled pill and its icon hops */
+        #toolbar { bottom: max(16px, env(safe-area-inset-bottom)); animation: toolbarIn 0.7s var(--bouncy) 0.15s both; }
+        .toolbar { box-shadow: 0 8px 24px rgba(68, 64, 60, 0.16), 0 2px 6px rgba(68, 64, 60, 0.08); }
+        .dark .toolbar { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3); }
+        .nav-item { display: flex; align-items: center; gap: 0; height: 3rem; padding: 0 0.8rem; border-radius: 9999px; color: #78716c; }
+        .nav-item, .nav-item[class] { transition: transform 0.45s var(--bouncy), background-color 0.3s ease, color 0.3s ease, padding 0.5s var(--lively), gap 0.5s var(--lively); }
+        .nav-item .label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; font-size: 0.875rem; font-weight: 700; transition: max-width 0.5s var(--lively), opacity 0.25s ease; }
+        .nav-item.active { background-color: #fef3c7; color: #b45309; gap: 0.45rem; padding: 0 1.05rem 0 0.85rem; }
+        .nav-item.active .label { max-width: 6rem; opacity: 1; }
+        .nav-item.active .icon { animation: navHop 0.6s var(--lively); }
+        .dark .nav-item { color: #a8a29e; }
+        .dark .nav-item.active { background-color: #451a03; color: #fbbf24; }
 
         /* Everything you press squishes and springs back */
         button, button[class] { transition: transform 0.45s var(--bouncy), border-radius 0.45s var(--bouncy), background-color 0.2s ease, color 0.2s ease; }
@@ -92,6 +96,7 @@
         @keyframes toastOut { to { opacity: 0; transform: translateY(40%) scale(0.96); } }
         @keyframes spinIn { from { transform: rotate(-85deg) scale(0.58); opacity: 0; } }
         @keyframes logoIn { from { transform: rotate(-18deg) scale(0.5); opacity: 0; } }
+        @keyframes toolbarIn { from { opacity: 0; transform: translateY(40px) scale(0.9); } }
         @keyframes navHop { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-3.5px) scale(1.12); } 100% { transform: translateY(0) scale(1); } }
         @keyframes bump { from { transform: scale(1.15); } }
         @keyframes pop { from { transform: scale(0.58); } }
@@ -288,7 +293,15 @@
             </div>
             <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
-                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v2.3.1</span>
+                    <span class="text-xs font-bold text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md">v2.5.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Rebuilt timeline planner: nothing you need to do ever lands in your sleep hours. Waiting steps stretch or shrink to fit your day, your custom times are respected as preferences, impossible ready times offer the nearest ones that work, and finishing a step early or late re-plans the rest.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.4.0</span>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">New floating toolbar: the tab bar is now a pill that floats above the page, and the tab you're on expands to show its name.</p>
+                </div>
+                <div>
+                    <span class="text-xs font-bold text-stone-500 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-md">v2.3.1</span>
                     <p class="text-sm text-stone-600 dark:text-stone-300 mt-1">Offline mode no longer breaks if an icon file is missing.</p>
                 </div>
                 <div>
@@ -614,7 +627,7 @@
                     </div>
                     <details class="border-t border-stone-100 dark:border-stone-700 pt-3">
                         <summary class="cursor-pointer text-sm font-bold text-stone-600 dark:text-stone-300">Customize step times</summary>
-                        <p class="text-xs text-stone-400 dark:text-stone-500 mt-2 mb-3">Empty fields use the automatic time shown in grey. Your times are saved separately for each bread.</p>
+                        <p class="text-xs text-stone-400 dark:text-stone-500 mt-2 mb-3">These are your preferred times. Empty fields use the automatic time shown in grey. Waiting steps (starter, bulk, fridge, proofing, cooling) may be stretched a little so that nothing you need to do lands in your sleep hours. Saved separately for each bread.</p>
                         <div id="tlStepTimes" class="space-y-2"></div>
                         <button onclick="resetDurations()" class="mt-3 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline">Reset to automatic</button>
                     </details>
@@ -635,7 +648,7 @@
 
         <div class="max-w-md mx-auto mt-8 mb-4 flex flex-col items-center justify-center gap-3">
             <button onclick="toggleVersionModal()" class="text-xs font-bold bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-3 py-1 rounded-full hover:bg-stone-300 dark:hover:bg-stone-700 transition">
-                v2.3.1
+                v2.5.0
             </button>
             <a href="https://github.com/shaygur98/Sourdough-Calculator" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition" aria-label="GitHub Repository">
                 <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -659,27 +672,20 @@
         </div>
     </div>
 
-    <nav class="bg-white dark:bg-stone-900 pb-safe pt-2 px-2 shadow-[0_-1px_10px_rgba(0,0,0,0.05)] dark:shadow-none dark:border-t dark:border-stone-800 fixed bottom-0 w-full z-20 transition-colors duration-300">
-        <div class="flex justify-around max-w-md mx-auto mb-2">
-            <button onclick="switchTab('recipe')" id="nav-recipe" class="nav-item active flex flex-col items-center gap-1 p-2 w-[24%]">
-                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-scale"/></svg>
-                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Custom</span>
+    <!-- Floating toolbar (Material 3 Expressive style): the active tab expands to show its label -->
+    <nav id="toolbar" class="fixed z-20 left-0 right-0 flex justify-center pointer-events-none">
+        <div class="toolbar flex items-center gap-1 p-1.5 rounded-full bg-white dark:bg-stone-800 border border-stone-100 dark:border-stone-700 pointer-events-auto transition-colors duration-300">
+            <button onclick="switchTab('recipe')" id="nav-recipe" class="nav-item active" aria-label="Custom">
+                <svg class="icon ic w-6 h-6"><use href="#i-scale"/></svg><span class="label">Custom</span>
             </button>
-            <button onclick="switchTab('presets')" id="nav-presets" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
-                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-loaf"/></svg>
-                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Breads</span>
+            <button onclick="switchTab('presets')" id="nav-presets" class="nav-item" aria-label="Breads">
+                <svg class="icon ic w-6 h-6"><use href="#i-loaf"/></svg><span class="label">Breads</span>
             </button>
-            <button onclick="switchTab('starter')" id="nav-starter" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
-                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-jar"/></svg>
-                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Starter</span>
+            <button onclick="switchTab('starter')" id="nav-starter" class="nav-item" aria-label="Starter">
+                <svg class="icon ic w-6 h-6"><use href="#i-jar"/></svg><span class="label">Starter</span>
             </button>
-            <button onclick="switchTab('timeline')" id="nav-timeline" class="nav-item flex flex-col items-center gap-1 p-2 w-[24%]">
-                <div class="pill absolute z-0 w-full h-8 top-1 left-0"></div>
-                <svg class="icon ic w-6 h-6 z-10 text-stone-500 dark:text-stone-400"><use href="#i-timer"/></svg>
-                <span class="text-[10px] font-medium z-10 text-stone-600 dark:text-stone-300">Timeline</span>
+            <button onclick="switchTab('timeline')" id="nav-timeline" class="nav-item" aria-label="Timeline">
+                <svg class="icon ic w-6 h-6"><use href="#i-timer"/></svg><span class="label">Timeline</span>
             </button>
         </div>
     </nav>
@@ -905,6 +911,14 @@
             return r ? `${h}h ${r}m` : `${h}h`;
         }
 
+        // Short "when": Today 18:30 / Tomorrow 07:00 / Sat 10:00
+        function fmtWhen(t) {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const diff = Math.round((new Date(t).setHours(0, 0, 0, 0) - today) / 864e5);
+            const day = diff === 0 ? 'today' : diff === 1 ? 'tomorrow' : new Date(t).toLocaleDateString([], { weekday: 'short' });
+            return `${day} ${fmtTime(t)}`;
+        }
+
         function fmtDay(t) {
             const d = new Date(t), today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -947,11 +961,29 @@
             };
         }
 
+        // How far a waiting step may stretch or shrink to fit your day (minutes), and how much we mind changing it.
+        // Hands-on steps are fixed. A custom time becomes the preferred length and widens the range if needed.
+        function flexFor(key, kind, ideal) {
+            const r = {
+                feed: [0.8 * ideal, 1.5 * ideal, 1],          // a ripe starter keeps for a while past its peak
+                bulk: [0.85 * ideal, 1.2 * ideal, 4],         // the most sensitive step
+                preshape: [20, 60, 0.5],
+                cold: kind === 'pizza' ? [18 * 60, 72 * 60, 0.2] : [8 * 60, 20 * 60, 0.3],
+                warm: kind === 'pizza' ? [60, 240, 0.7] : [60, 180, 0.7],
+                proof: [0.75 * ideal, 1.5 * ideal, 2],
+                cool: [ideal, ideal + 180, 0.1]               // baking earlier and letting it cool longer is fine
+            }[key];
+            if (!r) return { lo: ideal, hi: ideal, weight: 0 };
+            return { lo: Math.min(r[0], ideal), hi: Math.max(r[1], ideal), weight: r[2] };
+        }
+
         // Steps for a bread style. Overlap steps run alongside the end of the step before the next main step.
         function buildSteps(style, o) {
             const kind = STYLES[style].kind, pizza = kind === 'pizza';
-            const step = (key, auto, title, icon, remind, note, extra) =>
-                Object.assign({ key, auto, mins: o.dur[key] > 0 ? o.dur[key] : auto, title, icon, remind, note }, extra);
+            const step = (key, auto, title, icon, remind, note, extra) => {
+                const ideal = o.dur[key] > 0 ? o.dur[key] : auto;
+                return Object.assign({ key, auto, ideal, mins: ideal, title, icon, remind, note }, flexFor(key, kind, ideal), extra);
+            };
 
             const steps = [step('feed', o.peak, 'Feed starter', 'jar', 'Time to feed your starter', 'Let it rise until bubbly and roughly doubled.')];
             if (o.autolyse) steps.push(step('autolyse', 45, 'Autolyse', 'drop', 'Time to autolyse', 'Mix just the flour and water while the starter finishes rising.', { overlap: true }));
@@ -970,7 +1002,7 @@
 
             if (o.cold) {
                 steps.push(step('cold', pizza ? 24 * 60 : 12 * 60, pizza ? 'Cold ferment in fridge' : 'Cold proof in fridge', 'fridge', 'Into the fridge it goes',
-                    'Covered, in the fridge. Nothing to do here.', { flex: pizza ? [24 * 60, 72 * 60] : [8 * 60, 16 * 60] }));
+                    'Covered, in the fridge. Nothing to do here.'));
                 if (pizza || kind === 'focaccia') steps.push(step('warm', pizza ? 120 : 90, 'Bring to room temp', 'thermo', 'Take the dough out of the fridge', 'Let it warm up and relax before baking.'));
             } else {
                 steps.push(step('proof', ROOM_PROOF[kind], 'Final proof', 'timer', 'Final proof time', 'Until puffy, and a floured finger poke springs back slowly.'));
@@ -1000,7 +1032,112 @@
             });
         }
 
-        function layout(steps, anchor, backward) {
+        // ---------- Scheduler ----------
+        // Hands-on moments (every step start, each fold, preheat, autolyse) must never fall in sleep hours.
+        // Waiting steps stretch or shrink within their range; we pick the plan closest to the preferred lengths.
+
+        const idealOf = s => s.ideal || s.mins;
+
+        // Possible lengths for a step: its preferred length, then 15-minute steps out to its limits
+        function lengthOptions(s) {
+            const ideal = idealOf(s), lo = s.lo || ideal, hi = s.hi || ideal, out = [ideal];
+            for (let d = ideal - 15; d >= lo; d -= 15) out.push(d);
+            for (let d = ideal + 15; d <= hi; d += 15) out.push(d);
+            return out;
+        }
+
+        const changeCost = (s, d) => s.weight ? s.weight * Math.pow((d - idealOf(s)) / idealOf(s), 2) : 0;
+
+        // Main steps in order; overlap steps (autolyse, preheat) ride on the start of the next main step
+        function prepareChain(steps, include) {
+            const chain = steps.filter(s => !s.overlap && include(s)).map(s => ({ step: s, opts: lengthOptions(s), lead: [] }));
+            steps.forEach((s, i) => {
+                if (!s.overlap || s.done) return;
+                const next = steps.slice(i + 1).find(n => !n.overlap);
+                const link = chain.find(c => c.step === next);
+                if (link) link.lead.push(s.mins);
+            });
+            return chain;
+        }
+
+        // Every moment you need to act during one main step, given its start and length
+        function momentsOf(link, start, d) {
+            const s = link.step, t = [start];
+            if (s.foldCfg) for (let k = 1; k <= s.foldCfg.count; k++) { const f = start + k * s.foldCfg.every * MIN; if (f < start + d * MIN) t.push(f); }
+            link.lead.forEach(m => t.push(start - m * MIN));
+            return t;
+        }
+
+        // Work backward from an end time; returns every reachable start time with the cheapest plan to get there
+        // awakeAt: during a bake you're clearly up right now, so hands-on work in the next hour is fine even at night
+        function solveFrom(chain, end, awakeAt) {
+            const ok = t => (awakeAt != null && t >= awakeAt && t <= awakeAt + 60 * MIN) || !inSleep(t);
+            let layer = new Map([[end, { cost: 0, ds: [] }]]);
+            for (let i = chain.length - 1; i >= 0 && layer.size; i--) {
+                const next = new Map();
+                for (const [e, v] of layer) {
+                    for (const d of chain[i].opts) {
+                        const s = e - d * MIN;
+                        if (!momentsOf(chain[i], s, d).every(ok)) continue;
+                        const cost = v.cost + changeCost(chain[i].step, d), prev = next.get(s);
+                        if (!prev || cost < prev.cost) next.set(s, { cost, ds: [d].concat(v.ds) });
+                    }
+                }
+                layer = next;
+            }
+            return layer;
+        }
+
+        // Cheapest plan ending exactly at `end` whose first step starts no earlier than `earliest`
+        function planEndingAt(chain, end, earliest, exactStart) {
+            let best = null;
+            for (const [start, v] of solveFrom(chain, end, exactStart)) {
+                if (exactStart != null ? start !== exactStart : start < earliest) continue;
+                if (!best || v.cost < best.cost) best = { start, end, cost: v.cost, ds: v.ds };
+            }
+            return best;
+        }
+
+        function applyPlan(chain, steps, plan) {
+            chain.forEach((c, i) => { c.step.mins = plan.ds[i]; });
+            layoutChain(chain.map(c => c.step), plan.start);
+            placeExtras(steps);
+        }
+
+        const sumOf = (chain, f) => chain.reduce((a, c) => a + f(c), 0);
+        const snap = (t, grid) => Math.ceil(t / grid) * grid;
+
+        // Ready by: the exact time if it works; otherwise the nearest times that do (within three days either way)
+        function planReadyBy(chain, ready, earliest) {
+            const exact = planEndingAt(chain, ready, earliest);
+            if (exact) return { plan: exact };
+            const earliestEnd = earliest + sumOf(chain, c => Math.min(...c.opts)) * MIN;
+            let later = null, sooner = null;
+            for (let k = 1; k <= 288 && (!later || !sooner); k++) {
+                if (!later) later = planEndingAt(chain, ready + k * 15 * MIN, earliest);
+                const t = ready - k * 15 * MIN;
+                if (!sooner && t >= earliestEnd) sooner = planEndingAt(chain, t, earliest);
+            }
+            return { plan: null, later, sooner };
+        }
+
+        // Start now: the soonest good plan, trading a later finish against bending the step lengths
+        function planStartNow(chain, earliest) {
+            const minEnd = snap(earliest + sumOf(chain, c => Math.min(...c.opts)) * MIN, 15 * MIN);
+            const span = sumOf(chain, c => Math.max(...c.opts) - Math.min(...c.opts)) * MIN + 36 * 60 * MIN;
+            let best = null;
+            for (let end = minEnd; end <= minEnd + span; end += 15 * MIN) {
+                const lateness = 0.05 * (end - minEnd) / (60 * MIN);
+                if (best && lateness > best.score) break;
+                const p = planEndingAt(chain, end, earliest);
+                if (p && (!best || p.cost + lateness < best.score)) best = Object.assign(p, { score: p.cost + lateness });
+            }
+            return best;
+        }
+
+        // Fallback when nothing fits (e.g. sleep hours cover almost the whole day): preferred lengths, laid out plainly
+        function layoutPlain(steps, anchor, backward) {
+            steps.forEach(s => { s.mins = idealOf(s); });
             const chain = steps.filter(s => !s.overlap);
             const total = chain.reduce((a, s) => a + s.mins, 0) * MIN;
             layoutChain(chain, backward ? anchor - total : anchor);
@@ -1021,10 +1158,20 @@
             return list.sort((a, b) => a.t - b.t);
         }
 
+        // Sleep hours are read once per plan (the scheduler checks thousands of moments)
+        let sleepWin = null;
+        function readSleep() {
+            sleepWin = {
+                from: toMinutes(document.getElementById('tlSleepFrom').value),
+                to: toMinutes(document.getElementById('tlSleepTo').value),
+                tz: new Date().getTimezoneOffset()
+            };
+        }
         function inSleep(t) {
-            const from = toMinutes(document.getElementById('tlSleepFrom').value), to = toMinutes(document.getElementById('tlSleepTo').value);
-            const d = new Date(t), m = d.getHours() * 60 + d.getMinutes();
+            if (!sleepWin) readSleep();
+            const { from, to, tz } = sleepWin;
             if (from === to) return false;
+            const m = (((Math.floor(t / MIN) - tz) % 1440) + 1440) % 1440;
             return from < to ? (m >= from && m < to) : (m >= from || m < to);
         }
 
@@ -1039,30 +1186,35 @@
             return t;
         }
 
-        // Build the plan; the fridge proof stretches or shrinks (within a safe range) to keep steps out of sleep hours
+        // Build the plan for the current settings. Returns the laid-out steps plus what happened:
+        // fits (exact ready time works), later/sooner (nearest ready times that work), or stuck (nothing fits at all).
         function makePlan(recipe) {
+            readSleep();
             const steps = buildSteps(recipe.style, planOptions(recipe));
             const backward = checked('tlModeReady');
-            const anchor = backward ? readyTime() : Math.ceil(Date.now() / (5 * MIN)) * 5 * MIN;
-            const flex = steps.find(s => s.flex);
-            if (flex) {
-                flex.base = flex.mins;
-                const deltas = [0];
-                for (let k = 15; flex.base - k >= flex.flex[0] || flex.base + k <= flex.flex[1]; k += 15) deltas.push(k, -k);
-                let best = null;
-                for (const delta of deltas) {
-                    const m = flex.base + delta;
-                    if (m < flex.flex[0] || m > flex.flex[1]) continue;
-                    flex.mins = m;
-                    layout(steps, anchor, backward);
-                    const clashes = actionsOf(steps).filter(a => inSleep(a.t)).length;
-                    if (!best || clashes < best.clashes) best = { m, clashes };
-                    if (clashes === 0) break;
-                }
-                flex.mins = best.m;
+            const earliest = snap(Date.now(), 5 * MIN);
+            const chain = prepareChain(steps, () => true);
+            if (backward) {
+                const ready = readyTime();
+                const r = planReadyBy(chain, ready, earliest);
+                // The nearest time that works can squeeze every step; also offer an unhurried plan if it's different
+                const relaxed = r.plan ? null : planStartNow(chain, earliest);
+                const calm = relaxed && (!r.later || Math.abs(relaxed.end - r.later.end) > 30 * MIN) ? relaxed : null;
+                const chosen = r.plan || r.later || r.sooner || calm;
+                if (chosen) applyPlan(chain, steps, chosen); else layoutPlain(steps, ready, true);
+                return { steps, backward, ready, fits: !!r.plan, later: r.later, sooner: r.sooner, relaxed: calm, stuck: !chosen };
             }
-            layout(steps, anchor, backward);
-            return { steps, backward };
+            const p = planStartNow(chain, earliest);
+            if (p) applyPlan(chain, steps, p); else layoutPlain(steps, earliest, false);
+            return { steps, backward, fits: !!p, stuck: !p, delayedStart: p && p.start > earliest + 10 * MIN };
+        }
+
+        function useReadyTime(t) {
+            const el = document.getElementById('tlReady');
+            el.value = toLocalInput(t);
+            delete el.dataset.auto;
+            saveInputs();
+            renderTimeline();
         }
 
         function renderStepTimes(style, steps) {
@@ -1103,7 +1255,7 @@
             else delete dur[el.dataset.key];
             all[style] = dur;
             save({ durations: all });
-            renderTimeline();
+            renderTimelineSoon();
         }
 
         function resetDurations() {
@@ -1191,7 +1343,16 @@
             return lead + " They arrive while the app is open or in the background. If it was fully closed, you'll see where you're up to when you reopen it.";
         }
 
+        // While typing, plan once you pause rather than on every keystroke (some plans take a moment to search)
+        let renderTimer;
+        function renderTimelineSoon() {
+            clearTimeout(renderTimer);
+            renderTimer = setTimeout(renderTimeline, 150);
+        }
+
         function renderTimeline() {
+            clearTimeout(renderTimer);
+            readSleep();
             const recipe = bake ? bake.recipe : getRecipe();
             document.getElementById('tlRecipeIcon').setAttribute('href', '#i-' + recipe.icon);
             document.getElementById('tlRecipeName').innerText = recipe.name;
@@ -1210,19 +1371,31 @@
                 else if (next) notes.push(noteHtml('bell', `Up next: ${next.label} around ${fmtTime(next.t)}.`));
             } else {
                 let plan = makePlan(recipe);
-                // A ready time we picked for you moves a day later until there's time to start
+                // A ready time we picked for you quietly moves to the nearest one that works
                 const readyEl = document.getElementById('tlReady');
-                for (let k = 0; k < 4 && plan.backward && readyEl.dataset.auto && plan.steps[0].start < now; k++) {
-                    readyEl.value = toLocalInput(readyTime() + 864e5);
+                if (plan.backward && !plan.fits && readyEl.dataset.auto && plan.later) {
+                    readyEl.value = toLocalInput(plan.later.end);
                     plan = makePlan(recipe);
                 }
                 steps = plan.steps;
-                if (plan.backward && steps[0].start < now) {
-                    notes.push(noteHtml('warn', `To be ready then, you'd need to start ${fmtDay(steps[0].start)} at ${fmtTime(steps[0].start)}, which has already passed. Pick a later time or switch to Start now.`, true));
+                if (plan.stuck) {
+                    notes.push(noteHtml('warn', "There's no way to fit this bake around your sleep hours. Check the sleep times, or the step times under Customize.", true));
+                } else if (plan.backward && !plan.fits) {
+                    const shown = plan.later || plan.sooner || plan.relaxed;
+                    const opt = (p, extra) => `<button onclick="useReadyTime(${p.end})" class="mt-2 mr-2 text-xs font-bold px-3 py-1.5 rounded-full bg-white dark:bg-stone-800 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">Ready ${fmtWhen(p.end)}${extra || ''}</button>`;
+                    const options = [plan.later && opt(plan.later, plan.relaxed ? ' · tightest' : ''), plan.sooner && opt(plan.sooner), plan.relaxed && opt(plan.relaxed, ' · relaxed')];
+                    const why = plan.ready - now < sumOf(prepareChain(steps, () => true), c => Math.min(...c.opts)) * MIN
+                        ? "there isn't enough time left to make it"
+                        : 'it would need you at some point during your sleep hours';
+                    notes.push(noteHtml('warn', `Ready ${fmtWhen(plan.ready)} won't work: ${why}. Nearest times that fit your day:
+                        <span class="block">${options.filter(Boolean).join('')}</span>
+                        <span class="block mt-1 text-xs opacity-80">Showing ready ${fmtWhen(shown.end)} below.</span>`, true));
                 }
-                const flex = steps.find(s => s.flex);
-                if (flex && flex.mins !== flex.base) notes.push(noteHtml('moon', `Fridge time set to ${fmtDur(flex.mins)} so nothing lands in your sleep hours.`));
-                if (actionsOf(steps).some(a => inSleep(a.t))) notes.push(noteHtml('moon', 'Some steps land in your sleep hours (marked below). Try a different ready time.'));
+                if (plan.delayedStart) notes.push(noteHtml('moon', `Earliest start that keeps your nights free: ${fmtWhen(steps[0].start)}.`));
+                const bent = steps.filter(s => s.weight && Math.abs(s.mins - idealOf(s)) >= 15);
+                if (bent.length && !plan.stuck) {
+                    notes.push(noteHtml('moon', 'Adjusted to fit your day: ' + bent.map(s => `${s.title.toLowerCase()} ${fmtDur(s.mins)} <span class="opacity-70">(preferred ${fmtDur(idealOf(s))})</span>`).join(', ') + '.'));
+                }
                 renderStepTimes(recipe.style, steps);
             }
             document.getElementById('tlNotes').innerHTML = notes.join('');
@@ -1296,8 +1469,9 @@
             renderTimeline();
         }
 
-        // Marking a step done also completes earlier steps and moves later ones to start now.
-        // If a fridge step is still ahead, it absorbs the difference so the ready time stays put.
+        // Marking a step done also completes earlier steps, and the rest is re-planned from right now with the
+        // same rules: nothing in your sleep hours, step lengths as close to preferred as possible, and the ready
+        // time as close to the original as it can stay.
         function toggleStep(i) {
             const s = bake.steps[i];
             justDone = i;
@@ -1306,21 +1480,33 @@
             bake.steps.forEach((x, j) => {
                 if (j > i || (j < i && x.overlap) || x.done) return;
                 x.done = true;
-                // Finished early: show it where it actually happened
-                x.end = Math.min(x.end, now); x.start = Math.min(x.start, now);
+                // Show it where it actually happened: the step you tapped ended now; earlier ones at the latest now
+                x.start = Math.min(x.start, now);
+                x.end = j === i ? now : Math.min(x.end, now);
+                x.mins = Math.round((x.end - x.start) / MIN);
             });
-            if (!s.overlap) {
-                const rest = bake.steps.filter((x, j) => j > i && !x.overlap && !x.done);
-                const flex = rest.find(x => x.flex);
-                if (flex) {
-                    const others = rest.reduce((a, x) => a + (x === flex ? 0 : x.mins), 0);
-                    flex.mins = Math.min(flex.flex[1], Math.max(flex.flex[0], round15((bake.ready - now) / MIN - others)));
-                }
-                layoutChain(rest, now);
-                placeExtras(bake.steps);
-            }
+            if (!s.overlap) replanFrom(now, j => j > i);
             saveBake();
             renderTimeline();
+        }
+
+        function replanFrom(now, after) {
+            readSleep();
+            const chain = prepareChain(bake.steps, x => after(bake.steps.indexOf(x)) && !x.done);
+            if (!chain.length) return;
+            const lo = sumOf(chain, c => Math.min(...c.opts)), hi = sumOf(chain, c => Math.max(...c.opts));
+            let best = null;
+            for (let T = lo; T <= hi; T += 15) {
+                const end = now + T * MIN;
+                const p = planEndingAt(chain, end, now, now);
+                if (!p) continue;
+                const score = p.cost + 0.15 * Math.abs(end - bake.ready) / (60 * MIN);
+                if (!best || score < best.score) best = Object.assign(p, { score });
+            }
+            if (best) { applyPlan(chain, bake.steps, best); return; }
+            chain.forEach(c => { c.step.mins = idealOf(c.step); });
+            layoutChain(chain.map(c => c.step), now);
+            placeExtras(bake.steps);
         }
 
         // Reminders: a soft in-app card while you're looking, a system notification otherwise
@@ -1400,7 +1586,7 @@
             if (page && page.id === 'page-recipe') document.getElementById('tlSrcCustom').checked = true;
             if (page && page.id === 'page-presets') document.getElementById('tlSrcPresets').checked = true;
             saveInputs();
-            if (!t.closest || !t.closest('#tlStepTimes')) renderTimeline();
+            if (!t.closest || !t.closest('#tlStepTimes')) renderTimelineSoon();
         }
 
         document.addEventListener('input', onAnyInput);

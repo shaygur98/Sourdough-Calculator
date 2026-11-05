@@ -1,5 +1,5 @@
 // Bump this on every release so old caches get cleared
-const CACHE = 'sourdough-v2.3.1';
+const CACHE = 'sourdough-v2.5.0';
 const APP_FILES = ['./', './index.html', './manifest.json'];
 // Nice to have offline, but a missing one must not stop the app from installing
 const EXTRA_FILES = ['./icon.svg', './icon-192.png', './badge-96.png', './apple-touch-icon.png'];
